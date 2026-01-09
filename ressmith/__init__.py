@@ -4,7 +4,7 @@ ResSmith: Reservoir decline curve analysis and forecasting library.
 A strict 4-layer architecture for decline curve analysis with clean boundaries.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # Public API: Workflows
 from ressmith.workflows import (
