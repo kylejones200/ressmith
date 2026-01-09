@@ -25,19 +25,19 @@ This document outlines the migration of the decline curve analysis library from 
 - [x] ArpsHarmonicModel
 - [x] LinearDeclineModel (simple alternative)
 
-### Phase 2: Segmented Models (High Priority)
-- [ ] SegmentedDeclineModel - Multi-segment ARPS with change points
-- [ ] HyperbolicToExponentialModel - Switch model
+### Phase 2: Segmented Models (✅ Completed)
+- [x] SegmentedDeclineModel - Multi-segment ARPS with change points
+- [x] HyperbolicToExponentialSwitchModel - Switch model
 
 ### Phase 3: Advanced Models
 - [ ] PowerLawDeclineModel
 - [ ] DuongModel
 - [ ] StretchedExponentialModel
 
-### Phase 4: Fitting & Diagnostics
-- [ ] Enhanced fitting with ramp detection
-- [ ] Fit diagnostics and validation
-- [ ] Parameter constraints and bounds
+### Phase 4: Fitting & Diagnostics (In Progress)
+- [x] Enhanced fitting with ramp detection (ramp-aware initial guesses implemented)
+- [x] Fit diagnostics and validation (FitDiagnostics module added)
+- [ ] Parameter constraints and bounds (next step)
 
 ### Phase 5: Multi-phase Support
 - [ ] Full oil/gas/water handling

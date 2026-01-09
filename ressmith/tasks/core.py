@@ -24,6 +24,7 @@ from ressmith.objects.validate import (
     assert_rate_series_alignment,
 )
 from ressmith.primitives.base import BaseDeclineModel, BaseEconModel
+from ressmith.primitives.diagnostics import compute_diagnostics
 from ressmith.primitives.economics import (
     cashflow_from_forecast,
     irr,
@@ -144,9 +145,21 @@ class FitDeclineTask:
 class ForecastTask:
     """Task for generating forecasts from fitted models."""
 
-    def __init__(self, model: BaseDeclineModel) -> None:
-        """Initialize forecast task."""
+    def __init__(
+        self, model: BaseDeclineModel, in_sample_data: Optional[RateSeries] = None
+    ) -> None:
+        """
+        Initialize forecast task.
+
+        Parameters
+        ----------
+        model : BaseDeclineModel
+            Fitted decline model
+        in_sample_data : RateSeries, optional
+            In-sample data for diagnostics computation
+        """
         self.model = model
+        self.in_sample_data = in_sample_data
 
     def run(self, spec: ForecastSpec) -> tuple[ForecastResult, pd.DataFrame]:
         """
@@ -165,13 +178,44 @@ class ForecastTask:
         # Generate forecast
         result = self.model.predict(spec)
 
-        # Compute diagnostics (residual stats if we had in-sample data)
-        diagnostics = pd.DataFrame(
-            {
-                "metric": ["horizon", "frequency"],
-                "value": [spec.horizon, spec.frequency],
-            }
-        )
+        # Compute diagnostics if in-sample data available
+        diagnostics_rows = [
+            {"metric": "horizon", "value": spec.horizon},
+            {"metric": "frequency", "value": spec.frequency},
+        ]
+
+        if self.in_sample_data is not None:
+            # Generate in-sample predictions for diagnostics
+            in_sample_spec = ForecastSpec(
+                horizon=len(self.in_sample_data.rate), frequency=spec.frequency
+            )
+            in_sample_pred = self.model.predict(in_sample_spec)
+
+            # Compute diagnostics
+            q_obs = self.in_sample_data.rate
+            q_pred = in_sample_pred.yhat.values[: len(q_obs)]
+
+            diag = compute_diagnostics(q_obs, q_pred)
+            diagnostics_rows.extend(
+                [
+                    {"metric": "rmse", "value": diag.rmse},
+                    {"metric": "mae", "value": diag.mae},
+                    {"metric": "mape", "value": diag.mape},
+                    {"metric": "r_squared", "value": diag.r_squared},
+                ]
+            )
+
+            # Add quality flags
+            for flag, value in diag.quality_flags.items():
+                diagnostics_rows.append({"metric": f"flag_{flag}", "value": value})
+
+            # Add warnings
+            if diag.warnings:
+                diagnostics_rows.append(
+                    {"metric": "warnings", "value": "; ".join(diag.warnings)}
+                )
+
+        diagnostics = pd.DataFrame(diagnostics_rows)
 
         return result, diagnostics
 
