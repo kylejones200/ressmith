@@ -64,7 +64,7 @@ This document outlines the migration of the decline curve analysis library from 
 - ExponentialArps → Already in ressmith as ArpsExponentialModel
 - HyperbolicArps → Already in ressmith as ArpsHyperbolicModel
 - HarmonicArps → Already in ressmith as ArpsHarmonicModel
-- HyperbolicToExponential → Need to migrate
+- HyperbolicToExponential → ✅ Already in ressmith as HyperbolicToExponentialSwitchModel
 
 ### From pydca/decline_curve/segmented_decline.py
 - DeclineSegment → ✅ Already in ressmith as Layer 1 Object
@@ -118,13 +118,24 @@ This document outlines the migration of the decline curve analysis library from 
 4. **Test Coverage**: Migrate tests alongside code
 5. **Incremental**: Migrate one model/feature at a time
 
-## Next Steps
+## Migration Status Summary
 
-1. ✅ Migrate SegmentedDeclineModel - Completed
-2. ✅ Enhance fitting with ramp detection - Completed
-3. ✅ Fixed Terminal Decline Model - Completed
-4. Add plotsmith integration for visualization
-5. Port yield models (GOR, CGR, water cut)
-6. Add ensemble modeling capabilities
-7. Add uncertainty quantification (Monte Carlo)
+**✅ COMPLETED - Decline Curve Analysis Models:**
+- All core ARPS models (Exponential, Hyperbolic, Harmonic)
+- Advanced decline models (PowerLaw, Duong, StretchedExponential)
+- Segmented decline models
+- Fixed terminal decline variant
+- Yield models for multi-phase forecasting
+- Ensemble modeling for combining multiple decline models
+- Uncertainty quantification with Monte Carlo
+- Portfolio analysis workflows
+- All Phase 1-6 features from original plan
+
+**❌ NOT MIGRATED (Out of Scope for ResSmith):**
+- Deep learning models (DeepAR, TFT, LSTM, TimeSFM, Chronos) - These belong in a separate ML forecasting library
+- Statistical models (ARIMA, exponential smoothing, moving average) - Not decline curve specific
+- Physics-based models (material balance, pressure decline) - Different domain, belong in reservoir engineering library
+- RTA/IPR/VLP - Reservoir engineering tools, not decline curve analysis
+
+**Note:** ResSmith focuses specifically on **decline curve analysis** models. Other forecasting and reservoir engineering capabilities in pydca are intentionally excluded to maintain clear boundaries and avoid scope creep.
 
