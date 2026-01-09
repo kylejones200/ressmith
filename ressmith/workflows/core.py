@@ -3,17 +3,25 @@ Core workflow functions for ResSmith.
 """
 
 import logging
-from typing import Any, Callable, Optional
+from datetime import datetime
+from typing import Any, Callable, Literal, Optional
 
 import pandas as pd
 
-from ressmith.objects.domain import EconResult, EconSpec, ForecastResult
+from ressmith.objects.domain import (
+    EconResult,
+    EconSpec,
+    ForecastResult,
+    ForecastSpec,
+)
 from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.models import (
     ArpsExponentialModel,
     ArpsHarmonicModel,
     ArpsHyperbolicModel,
+    HyperbolicToExponentialSwitchModel,
     LinearDeclineModel,
+    SegmentedDeclineModel,
 )
 from ressmith.tasks.core import BatchTask, EconTask, FitDeclineTask, ForecastTask
 
@@ -53,6 +61,7 @@ def fit_forecast(
         "arps_hyperbolic": ArpsHyperbolicModel,
         "arps_harmonic": ArpsHarmonicModel,
         "linear_decline": LinearDeclineModel,
+        "hyperbolic_to_exponential": HyperbolicToExponentialSwitchModel,
     }
     if model_name not in model_map:
         raise ValueError(f"Unknown model: {model_name}")
@@ -202,4 +211,67 @@ def full_run(
 
     logger.info("Completed full_run")
     return result
+
+
+def fit_segmented_forecast(
+    data: pd.DataFrame,
+    segment_dates: list[tuple[datetime, datetime]],
+    kinds: Optional[list[Literal["exponential", "harmonic", "hyperbolic"]]] = None,
+    horizon: int = 24,
+    enforce_continuity: bool = True,
+    **kwargs: Any,
+) -> tuple[Any, list[Any], list[str]]:
+    """
+    Fit a segmented decline model and generate forecast.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Production data with datetime index
+    segment_dates : list
+        List of (start_date, end_date) tuples for each segment
+    kinds : list, optional
+        ARPS decline types for each segment (default: all 'hyperbolic')
+    horizon : int
+        Forecast horizon in periods (default: 24)
+    enforce_continuity : bool
+        Enforce rate continuity at segment boundaries (default: True)
+    **kwargs
+        Additional parameters
+
+    Returns
+    -------
+    tuple
+        (forecast_result, segments, continuity_errors)
+    """
+    logger.info(
+        f"Starting fit_segmented_forecast with {len(segment_dates)} segments, "
+        f"horizon={horizon}"
+    )
+
+    # Create model
+    model = SegmentedDeclineModel(
+        segment_dates=segment_dates,
+        kinds=kinds,
+        enforce_continuity=enforce_continuity,
+        **kwargs,
+    )
+
+    # Fit model
+    fitted_model = model.fit(data)
+
+    # Generate forecast
+    forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
+    forecast_result = fitted_model.predict(forecast_spec)
+
+    # Get segments and errors
+    segments = fitted_model.get_segments()
+    continuity_errors = fitted_model.get_continuity_errors()
+
+    logger.info(
+        f"Completed fit_segmented_forecast. Segments: {len(segments)}, "
+        f"Errors: {len(continuity_errors)}"
+    )
+
+    return forecast_result, segments, continuity_errors
 

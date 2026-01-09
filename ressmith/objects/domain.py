@@ -10,7 +10,8 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-from timesmith.typing import SeriesLike
+# Note: timesmith.typing is available for type hints if needed
+# from timesmith.typing import SeriesLike, PanelLike
 
 
 @dataclass(frozen=True)
@@ -134,4 +135,44 @@ class EconResult:
     irr: Optional[float] = None
     payout_time: Optional[float] = None  # Periods to payout
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class DeclineSegment:
+    """A single segment in a segmented decline curve."""
+
+    kind: str  # "exponential", "harmonic", or "hyperbolic"
+    parameters: dict[str, float]  # ARPS parameters: qi, di, b
+    t_start: float = 0.0
+    t_end: Optional[float] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    start_cum: Optional[float] = None
+    end_cum: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        """Validate segment parameters."""
+        qi = self.parameters.get("qi", 0.0)
+        di = self.parameters.get("di", 0.0)
+        b = self.parameters.get("b", 0.0)
+
+        if qi <= 0:
+            raise ValueError("Initial rate (qi) must be positive")
+        if di <= 0:
+            raise ValueError("Decline rate (di) must be positive")
+        if self.kind == "hyperbolic" and (b < 0 or b > 2.0):
+            raise ValueError(f"b-factor must be between 0 and 2.0, got {b}")
+        if self.kind == "exponential" and abs(b) > 1e-6:
+            raise ValueError("b-factor must be 0 for exponential decline")
+        if self.kind == "harmonic" and abs(b - 1.0) > 1e-6:
+            raise ValueError("b-factor must be 1.0 for harmonic decline")
+
+
+@dataclass(frozen=True)
+class SegmentedDeclineResult:
+    """Result of segmented decline curve analysis."""
+
+    segments: list[DeclineSegment]
+    forecast: pd.Series
+    continuity_errors: list[str] = field(default_factory=list)
 

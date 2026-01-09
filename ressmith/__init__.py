@@ -10,6 +10,7 @@ __version__ = "0.0.1"
 from ressmith.workflows import (
     evaluate_economics,
     fit_forecast,
+    fit_segmented_forecast,
     forecast_many,
     full_run,
 )
@@ -33,6 +34,7 @@ from ressmith.objects import (
 __all__ = [
     # Workflows
     "fit_forecast",
+    "fit_segmented_forecast",
     "forecast_many",
     "evaluate_economics",
     "full_run",

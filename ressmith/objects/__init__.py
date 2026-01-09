@@ -8,6 +8,7 @@ Only standard library, numpy, pandas, and timesmith.typing allowed.
 
 from ressmith.objects.domain import (
     CumSeries,
+    DeclineSegment,
     DeclineSpec,
     EconResult,
     EconSpec,
@@ -15,6 +16,7 @@ from ressmith.objects.domain import (
     ForecastSpec,
     ProductionSeries,
     RateSeries,
+    SegmentedDeclineResult,
     WellMeta,
 )
 
@@ -28,5 +30,7 @@ __all__ = [
     "EconSpec",
     "ForecastResult",
     "EconResult",
+    "DeclineSegment",
+    "SegmentedDeclineResult",
 ]
 

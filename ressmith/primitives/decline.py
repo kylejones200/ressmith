@@ -14,6 +14,12 @@ try:
 except ImportError:
     HAS_SCIPY = False
 
+from ressmith.primitives.fitting_utils import (
+    initial_guess_exponential,
+    initial_guess_harmonic,
+    initial_guess_hyperbolic,
+)
+
 
 def arps_exponential(
     t: np.ndarray, qi: float, di: float, t0: float = 0.0
@@ -180,9 +186,10 @@ def fit_arps_exponential(
         use_scipy = HAS_SCIPY
 
     if use_scipy and HAS_SCIPY:
-        # Use scipy optimization
-        qi_init = q[0] if len(q) > 0 else 1.0
-        di_init = 0.1
+        # Use ramp-aware initial guess
+        init_guess = initial_guess_exponential(t, q)
+        qi_init = init_guess["qi"]
+        di_init = init_guess["di"]
         result = optimize.minimize(
             _objective_exponential,
             (qi_init, di_init),
@@ -234,10 +241,11 @@ def fit_arps_hyperbolic(
         use_scipy = HAS_SCIPY
 
     if use_scipy and HAS_SCIPY:
-        # Use scipy optimization
-        qi_init = q[0] if len(q) > 0 else 1.0
-        di_init = 0.1
-        b_init = 0.5
+        # Use ramp-aware initial guess
+        init_guess = initial_guess_hyperbolic(t, q)
+        qi_init = init_guess["qi"]
+        di_init = init_guess["di"]
+        b_init = init_guess["b"]
         result = optimize.minimize(
             _objective_hyperbolic,
             (qi_init, di_init, b_init),
@@ -291,9 +299,10 @@ def fit_arps_harmonic(
         use_scipy = HAS_SCIPY
 
     if use_scipy and HAS_SCIPY:
-        # Use scipy optimization
-        qi_init = q[0] if len(q) > 0 else 1.0
-        di_init = 0.1
+        # Use ramp-aware initial guess
+        init_guess = initial_guess_harmonic(t, q)
+        qi_init = init_guess["qi"]
+        di_init = init_guess["di"]
         result = optimize.minimize(
             _objective_harmonic,
             (qi_init, di_init),

@@ -3,17 +3,19 @@ Decline model classes wrapping primitive functions.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
 
 from ressmith.objects.domain import (
+    DeclineSegment,
     DeclineSpec,
     ForecastResult,
     ForecastSpec,
     ProductionSeries,
     RateSeries,
+    SegmentedDeclineResult,
 )
 from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.decline import (
@@ -24,6 +26,13 @@ from ressmith.primitives.decline import (
     fit_arps_hyperbolic,
     fit_arps_harmonic,
 )
+from ressmith.primitives.segmented import (
+    check_continuity,
+    fit_segment,
+    predict_segment,
+)
+from ressmith.primitives.switch import hyperbolic_to_exponential_rate
+from ressmith.primitives.fitting_utils import initial_guess_hyperbolic
 
 
 class ArpsExponentialModel(BaseDeclineModel):
@@ -351,6 +360,318 @@ class LinearDeclineModel(BaseDeclineModel):
             "supports_water": False,
             "supports_multiphase": False,
             "supports_irregular_time": True,  # Linear can handle irregular
+            "requires_positive": True,
+            "supports_censoring": False,
+            "supports_intervals": False,
+        }
+
+
+class SegmentedDeclineModel(BaseDeclineModel):
+    """Segmented decline model with multiple ARPS segments."""
+
+    def __init__(
+        self,
+        segment_dates: list[tuple[datetime, datetime]],
+        kinds: Optional[list[Literal["exponential", "harmonic", "hyperbolic"]]] = None,
+        enforce_continuity: bool = True,
+        **params: Any,
+    ) -> None:
+        """
+        Initialize segmented decline model.
+
+        Parameters
+        ----------
+        segment_dates : list
+            List of (start_date, end_date) tuples for each segment
+        kinds : list, optional
+            ARPS decline types for each segment (default: all 'hyperbolic')
+        enforce_continuity : bool
+            Enforce rate continuity at segment boundaries (default: True)
+        **params
+            Additional parameters
+        """
+        super().__init__(**params)
+        self.segment_dates = segment_dates
+        self.kinds = kinds or ["hyperbolic"] * len(segment_dates)
+        self.enforce_continuity = enforce_continuity
+        self._fitted_segments: list[DeclineSegment] = []
+        self._start_date: datetime | None = None
+        self._continuity_errors: list[str] = []
+
+        if len(self.kinds) != len(segment_dates):
+            raise ValueError("Number of kinds must match number of segments")
+
+    def fit(
+        self, data: ProductionSeries | RateSeries, **fit_params: Any
+    ) -> "SegmentedDeclineModel":
+        """Fit segmented decline model."""
+        # Extract rate data
+        if isinstance(data, ProductionSeries):
+            rate = data.oil  # Default to oil phase
+            time_index = data.time_index
+        else:
+            rate = data.rate
+            time_index = data.time_index
+
+        if not isinstance(time_index, pd.DatetimeIndex):
+            raise ValueError("Time index must be DatetimeIndex for segmented model")
+
+        self._start_date = time_index[0].to_pydatetime()
+
+        # Validate and sort segment dates
+        sorted_segments = sorted(self.segment_dates, key=lambda x: x[0])
+        for i in range(len(sorted_segments) - 1):
+            if sorted_segments[i][1] > sorted_segments[i + 1][0]:
+                raise ValueError(
+                    f"Segments overlap: {sorted_segments[i]} and {sorted_segments[i+1]}"
+                )
+
+        # Fit each segment
+        segments = []
+        self._continuity_errors = []
+
+        for i, (start_date, end_date) in enumerate(sorted_segments):
+            # Find indices for this segment
+            mask = (time_index >= pd.Timestamp(start_date)) & (
+                time_index < pd.Timestamp(end_date)
+            )
+            segment_series = pd.Series(rate, index=time_index)[mask]
+
+            if len(segment_series) < 3:
+                self._continuity_errors.append(
+                    f"Segment {i} has insufficient data: {len(segment_series)} points"
+                )
+                continue
+
+            # Convert time to days from start
+            t_segment = (segment_series.index - time_index[0]).days.values.astype(
+                float
+            )
+            q_segment = segment_series.values
+
+            try:
+                # Fit segment
+                params = fit_segment(t_segment, q_segment, self.kinds[i])
+
+                # Create segment object
+                start_idx = time_index.get_loc(segment_series.index[0])
+                end_idx = time_index.get_loc(segment_series.index[-1]) + 1
+
+                segment = DeclineSegment(
+                    kind=self.kinds[i],
+                    parameters=params,
+                    t_start=float(start_idx),
+                    t_end=float(end_idx),
+                    start_date=segment_series.index[0].to_pydatetime(),
+                    end_date=segment_series.index[-1].to_pydatetime(),
+                )
+                segments.append(segment)
+
+                # Check continuity with previous segment
+                if self.enforce_continuity and len(segments) > 1:
+                    prev_segment = segments[-2]
+                    curr_segment = segments[-1]
+                    t_transition = curr_segment.t_start
+
+                    is_continuous, error_msg = check_continuity(
+                        prev_segment, curr_segment, t_transition
+                    )
+                    if not is_continuous:
+                        self._continuity_errors.append(error_msg)
+
+            except Exception as e:
+                self._continuity_errors.append(f"Segment {i} fitting failed: {str(e)}")
+                continue
+
+        self._fitted_segments = segments
+        self._fitted = True
+        return self
+
+    def predict(self, spec: ForecastSpec) -> ForecastResult:
+        """Generate forecast from segmented model."""
+        self._check_fitted()
+
+        if len(self._fitted_segments) == 0:
+            raise ValueError("No segments fitted")
+
+        # Generate forecast by concatenating segment forecasts
+        forecast_parts = []
+
+        for i, segment in enumerate(self._fitted_segments):
+            # Calculate time range for this segment
+            if i == 0:
+                t_segment = np.arange(segment.t_start, segment.t_end, 1.0)
+            else:
+                # Continue from where previous segment ended
+                t_segment = np.arange(0, segment.t_end - segment.t_start, 1.0)
+
+            # Predict for this segment
+            q_segment = predict_segment(t_segment, segment.parameters, segment.kind)
+
+            # Create index for this segment
+            if i == 0 and self._start_date:
+                start = pd.Timestamp(self._start_date)
+                n_periods = len(q_segment)
+                segment_dates_idx = pd.date_range(
+                    start=start, periods=n_periods, freq=spec.frequency
+                )
+            else:
+                # Continue date index from previous segment
+                last_date = forecast_parts[-1].index[-1]
+                n_periods = len(q_segment)
+                segment_dates_idx = pd.date_range(
+                    start=last_date + pd.Timedelta(days=1),
+                    periods=n_periods,
+                    freq=spec.frequency,
+                )
+
+            forecast_part = pd.Series(q_segment, index=segment_dates_idx)
+            forecast_parts.append(forecast_part)
+
+        # Concatenate all segments
+        if forecast_parts:
+            full_forecast = pd.concat(forecast_parts)
+            # Limit to requested horizon
+            if len(full_forecast) > spec.horizon:
+                full_forecast = full_forecast.iloc[: spec.horizon]
+        else:
+            full_forecast = pd.Series(dtype=float)
+
+        # Create result
+        yhat_series = pd.Series(full_forecast.values, index=full_forecast.index, name="forecast")
+        model_spec = DeclineSpec(
+            model_name="segmented_decline",
+            parameters={"segments": len(self._fitted_segments)},
+            start_date=self._start_date or datetime.now(),
+        )
+
+        return ForecastResult(
+            yhat=yhat_series, metadata={}, model_spec=model_spec
+        )
+
+    def get_segments(self) -> list[DeclineSegment]:
+        """Get fitted segments."""
+        self._check_fitted()
+        return self._fitted_segments
+
+    def get_continuity_errors(self) -> list[str]:
+        """Get continuity errors if any."""
+        return self._continuity_errors
+
+    @property
+    def tags(self) -> dict[str, Any]:
+        """Model tags."""
+        return {
+            "supports_oil": True,
+            "supports_gas": True,
+            "supports_water": False,
+            "supports_multiphase": False,
+            "supports_irregular_time": False,
+            "requires_positive": True,
+            "supports_censoring": False,
+            "supports_intervals": False,
+        }
+
+
+class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
+    """
+    Hyperbolic decline switching to exponential at a transition time.
+
+    Rate equation:
+    - For t < t_switch: q(t) = qi / (1 + b * di * t)^(1/b)
+    - For t >= t_switch: q(t) = q_switch * exp(-di_exp * (t - t_switch))
+    """
+
+    def __init__(
+        self,
+        t_switch: Optional[float] = None,
+        di_exp: Optional[float] = None,
+        **params: Any,
+    ) -> None:
+        """Initialize switch model."""
+        super().__init__(**params)
+        self._t_switch = t_switch
+        self._di_exp = di_exp
+        self._fitted_params: dict[str, float] = {}
+        self._start_date: datetime | None = None
+
+    def fit(
+        self, data: ProductionSeries | RateSeries, **fit_params: Any
+    ) -> "HyperbolicToExponentialSwitchModel":
+        """Fit switch model."""
+        if isinstance(data, ProductionSeries):
+            rate = data.oil
+            time_index = data.time_index
+        else:
+            rate = data.rate
+            time_index = data.time_index
+
+        t = (time_index - time_index[0]).days.values.astype(float)
+        hyper_guess = initial_guess_hyperbolic(t, rate)
+
+        if self._t_switch is None:
+            t_span = t[-1] - t[0] if len(t) > 1 else 1.0
+            t_switch = t_span * 0.67
+        else:
+            t_switch = self._t_switch
+
+        if self._di_exp is None:
+            di_exp = hyper_guess["di"]
+        else:
+            di_exp = self._di_exp
+
+        self._fitted_params = {
+            "qi": hyper_guess["qi"],
+            "di": hyper_guess["di"],
+            "b": hyper_guess["b"],
+            "t_switch": t_switch,
+            "di_exp": di_exp,
+        }
+        self._start_date = time_index[0].to_pydatetime()
+        self._fitted = True
+        return self
+
+    def predict(self, spec: ForecastSpec) -> ForecastResult:
+        """Generate forecast."""
+        self._check_fitted()
+
+        if self._start_date is None:
+            raise ValueError("Model not fitted")
+        start = pd.Timestamp(self._start_date)
+        forecast_index = pd.date_range(
+            start=start, periods=spec.horizon, freq=spec.frequency
+        )
+
+        t_forecast = (forecast_index - start).days.values.astype(float)
+
+        qi = self._fitted_params["qi"]
+        di = self._fitted_params["di"]
+        b = self._fitted_params["b"]
+        t_switch = self._fitted_params["t_switch"]
+        di_exp = self._fitted_params["di_exp"]
+
+        yhat = hyperbolic_to_exponential_rate(t_forecast, qi, di, b, t_switch, di_exp)
+
+        yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
+        model_spec = DeclineSpec(
+            model_name="hyperbolic_to_exponential_switch",
+            parameters=self._fitted_params,
+            start_date=self._start_date,
+        )
+
+        return ForecastResult(
+            yhat=yhat_series, metadata={}, model_spec=model_spec
+        )
+
+    @property
+    def tags(self) -> dict[str, Any]:
+        """Model tags."""
+        return {
+            "supports_oil": True,
+            "supports_gas": True,
+            "supports_water": False,
+            "supports_multiphase": False,
+            "supports_irregular_time": False,
             "requires_positive": True,
             "supports_censoring": False,
             "supports_intervals": False,

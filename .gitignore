@@ -89,3 +89,14 @@ Deep-AR for Production Forecasting.md
 # Untracked experimental code
 _untracked/
 wip/
+
+# Documentation files (migration guides, ecosystem guides)
+ECOSYSTEM_GUIDE.md
+ECOSYSTEM_INTEGRATION_COMPLETE.md
+ECOSYSTEM_STATUS.md
+IMPLEMENTATION_CHECKLIST.md
+MIGRATION_PLAN.md
+MIGRATION_PROGRESS.md
+MIGRATION_STATUS.md
+MIGRATION_UPDATE.md
+README_ECOSYSTEM.md
