@@ -19,9 +19,12 @@ from ressmith.primitives.models import (
     ArpsExponentialModel,
     ArpsHarmonicModel,
     ArpsHyperbolicModel,
+    DuongModel,
     HyperbolicToExponentialSwitchModel,
     LinearDeclineModel,
+    PowerLawDeclineModel,
     SegmentedDeclineModel,
+    StretchedExponentialModel,
 )
 from ressmith.tasks.core import BatchTask, EconTask, FitDeclineTask, ForecastTask
 
@@ -62,6 +65,9 @@ def fit_forecast(
         "arps_harmonic": ArpsHarmonicModel,
         "linear_decline": LinearDeclineModel,
         "hyperbolic_to_exponential": HyperbolicToExponentialSwitchModel,
+        "power_law": PowerLawDeclineModel,
+        "duong": DuongModel,
+        "stretched_exponential": StretchedExponentialModel,
     }
     if model_name not in model_map:
         raise ValueError(f"Unknown model: {model_name}")

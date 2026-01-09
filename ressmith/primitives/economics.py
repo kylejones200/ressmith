@@ -52,16 +52,29 @@ def cashflow_from_forecast(
     # Apply capex in first period
     cashflows.loc[0, "capex"] = -spec.capex
 
-    # Compute revenue (simplified: assumes single phase for now)
-    # In practice, would need to map forecast to price assumptions
-    if "oil" in spec.price_assumptions:
-        cashflows["revenue"] = rates * spec.price_assumptions["oil"]
-    elif "gas" in spec.price_assumptions:
-        cashflows["revenue"] = rates * spec.price_assumptions["gas"]
+    # Compute revenue - multi-phase support
+    # If forecast has multi-phase data in metadata, use it
+    revenue = np.zeros(n_periods)
+    if "phases" in forecast.metadata:
+        # Multi-phase forecast
+        phases = forecast.metadata["phases"]
+        for phase, phase_rates in phases.items():
+            if phase in spec.price_assumptions:
+                revenue += phase_rates * spec.price_assumptions[phase]
     else:
-        # Use first price assumption
-        price = list(spec.price_assumptions.values())[0]
-        cashflows["revenue"] = rates * price
+        # Single-phase forecast - use price assumptions
+        if "oil" in spec.price_assumptions:
+            revenue = rates * spec.price_assumptions["oil"]
+        elif "gas" in spec.price_assumptions:
+            revenue = rates * spec.price_assumptions["gas"]
+        elif "water" in spec.price_assumptions:
+            revenue = rates * spec.price_assumptions["water"]
+        else:
+            # Use first price assumption
+            price = list(spec.price_assumptions.values())[0]
+            revenue = rates * price
+    
+    cashflows["revenue"] = revenue
 
     # Apply taxes if specified
     if spec.taxes:
