@@ -20,6 +20,7 @@ from ressmith.primitives.models import (
     ArpsHarmonicModel,
     ArpsHyperbolicModel,
     DuongModel,
+    FixedTerminalDeclineModel,
     HyperbolicToExponentialSwitchModel,
     LinearDeclineModel,
     PowerLawDeclineModel,
@@ -68,6 +69,7 @@ def fit_forecast(
         "power_law": PowerLawDeclineModel,
         "duong": DuongModel,
         "stretched_exponential": StretchedExponentialModel,
+        "fixed_terminal_decline": FixedTerminalDeclineModel,
     }
     if model_name not in model_map:
         raise ValueError(f"Unknown model: {model_name}")

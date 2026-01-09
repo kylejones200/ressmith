@@ -44,7 +44,9 @@ This document outlines the migration of the decline curve analysis library from 
 - [x] Multi-phase economics (enhanced cashflow_from_forecast)
 - [x] Phase-specific decline models (all models support phase selection)
 
-### Phase 6: Integration Features
+### Phase 6: Integration Features (In Progress)
+- [x] Scenario analysis workflows (evaluate_scenarios, scenario_summary)
+- [x] Backtesting workflows (walk_forward_backtest)
 - [ ] Plotting integration with plotsmith
 - [ ] Anomaly detection integration with anomsmith
 - [ ] Spatial analysis integration with geosmith
@@ -98,9 +100,11 @@ This document outlines the migration of the decline curve analysis library from 
 
 ## Next Steps
 
-1. Migrate SegmentedDeclineModel (highest priority)
-2. Enhance fitting with ramp detection
-3. Add plotsmith integration for visualization
-4. Port additional decline models
-5. Add multi-phase support
+1. ✅ Migrate SegmentedDeclineModel - Completed
+2. ✅ Enhance fitting with ramp detection - Completed
+3. ✅ Fixed Terminal Decline Model - Completed
+4. Add plotsmith integration for visualization
+5. Port yield models (GOR, CGR, water cut)
+6. Add ensemble modeling capabilities
+7. Add uncertainty quantification (Monte Carlo)
 

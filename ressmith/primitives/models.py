@@ -35,6 +35,10 @@ from ressmith.primitives.advanced_decline import (
     power_law_rate,
     stretched_exponential_rate,
 )
+from ressmith.primitives.variants import (
+    fit_fixed_terminal_decline,
+    fixed_terminal_decline_rate,
+)
 from ressmith.primitives.constraints import (
     clip_parameters,
     get_default_bounds,
@@ -891,6 +895,115 @@ class StretchedExponentialModel(BaseDeclineModel):
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
             model_name="stretched_exponential",
+            parameters=self._fitted_params,
+            start_date=self._start_date,
+        )
+
+        return ForecastResult(
+            yhat=yhat_series, metadata={}, model_spec=model_spec
+        )
+
+    @property
+    def tags(self) -> dict[str, Any]:
+        """Model tags."""
+        return {
+            "supports_oil": True,
+            "supports_gas": True,
+            "supports_water": False,
+            "supports_multiphase": False,
+            "supports_irregular_time": False,
+            "requires_positive": True,
+            "supports_censoring": False,
+            "supports_intervals": False,
+        }
+
+class FixedTerminalDeclineModel(BaseDeclineModel):
+    """
+    Fixed terminal decline model.
+
+    Fits initial decline (hyperbolic/exponential/harmonic) and transitions
+    to a fixed terminal decline rate to prevent unrealistic long-term forecasts.
+    """
+
+    def __init__(
+        self,
+        kind: Literal["exponential", "harmonic", "hyperbolic"] = "hyperbolic",
+        terminal_decline_rate: float = 0.05,
+        transition_criteria: Literal["rate", "time"] = "rate",
+        transition_value: Optional[float] = None,
+        **params: Any,
+    ) -> None:
+        """
+        Initialize fixed terminal decline model.
+
+        Parameters
+        ----------
+        kind : str
+            Initial decline type (default: 'hyperbolic')
+        terminal_decline_rate : float
+            Annual terminal decline rate (default: 0.05 = 5% per year)
+        transition_criteria : str
+            When to transition: 'rate' or 'time' (default: 'rate')
+        transition_value : float, optional
+            Threshold value for transition
+        """
+        super().__init__(**params)
+        self.kind = kind
+        self.terminal_decline_rate = terminal_decline_rate
+        self.transition_criteria = transition_criteria
+        self.transition_value = transition_value
+        self._fitted_params: dict[str, float] = {}
+        self._start_date: datetime | None = None
+
+    def fit(
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
+    ) -> "FixedTerminalDeclineModel":
+        """Fit fixed terminal decline model."""
+        # Extract rate data
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
+
+        t = (time_index - time_index[0]).days.values.astype(float)
+
+        # Fit model
+        params = fit_fixed_terminal_decline(
+            t,
+            rate,
+            kind=self.kind,
+            terminal_decline_rate=self.terminal_decline_rate,
+            transition_criteria=self.transition_criteria,
+            transition_value=self.transition_value,
+        )
+
+        self._fitted_params = params
+        self._start_date = time_index[0].to_pydatetime()
+        self._fitted = True
+        return self
+
+    def predict(self, spec: ForecastSpec) -> ForecastResult:
+        """Generate forecast."""
+        self._check_fitted()
+
+        if self._start_date is None:
+            raise ValueError("Model not fitted")
+        start = pd.Timestamp(self._start_date)
+        forecast_index = pd.date_range(
+            start=start, periods=spec.horizon, freq=spec.frequency
+        )
+
+        t_forecast = (forecast_index - start).days.values.astype(float)
+
+        qi = self._fitted_params["qi"]
+        di = self._fitted_params["di"]
+        b = self._fitted_params["b"]
+        t_switch = self._fitted_params["t_switch"]
+        di_terminal = self._fitted_params["di_terminal"]
+
+        yhat = fixed_terminal_decline_rate(t_forecast, qi, di, b, t_switch, di_terminal)
+
+        yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
+        model_spec = DeclineSpec(
+            model_name="fixed_terminal_decline",
             parameters=self._fitted_params,
             start_date=self._start_date,
         )
