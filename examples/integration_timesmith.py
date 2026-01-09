@@ -9,8 +9,14 @@ import numpy as np
 import pandas as pd
 
 # Import from timesmith.typing (shared typing)
-from timesmith.typing import SeriesLike
-from timesmith.typing.validators import assert_series_like
+try:
+    from timesmith.typing import SeriesLike
+    from timesmith.typing.validators import assert_series_like
+    HAS_TIMESMITH_TYPING = True
+except ImportError:
+    # Fallback if timesmith.typing not available yet
+    HAS_TIMESMITH_TYPING = False
+    print("Warning: timesmith.typing not available, using basic validation")
 
 # Import ressmith workflows
 from ressmith import fit_forecast
@@ -22,8 +28,15 @@ def validate_and_forecast(data: SeriesLike, model_name: str = "arps_hyperbolic")
 
     This demonstrates the integration between ressmith and timesmith.
     """
-    # Validate input using timesmith validators
-    assert_series_like(data, name="production_data")
+    # Validate input using timesmith validators (if available)
+    if HAS_TIMESMITH_TYPING:
+        assert_series_like(data, name="production_data")
+    else:
+        # Basic validation fallback
+        if not isinstance(data, pd.Series):
+            raise ValueError("data must be pandas Series")
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("data index must be DatetimeIndex")
 
     # Convert to DataFrame for ressmith (ressmith expects DataFrame with datetime index)
     if isinstance(data, pd.Series):
