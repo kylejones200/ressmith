@@ -15,6 +15,7 @@ release = "0.0.1"
 
 # General configuration
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",

@@ -1,14 +1,15 @@
 ResSmith Documentation
 ======================
 
-Welcome to the ResSmith documentation.
-
-ResSmith is a Python library for decline curve analysis and reservoir forecasting.
+.. include:: index.md
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started
+   architecture
+   design_decisions
    api
 
 Indices and tables
