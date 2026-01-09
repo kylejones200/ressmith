@@ -49,7 +49,8 @@ This document outlines the migration of the decline curve analysis library from 
 - [x] Backtesting workflows (walk_forward_backtest)
 - [x] Model comparison workflows (compare_models)
 - [x] EUR estimation workflows (estimate_eur)
-- [ ] Fixed Terminal Decline Model (FixedTerminalDeclineModel) - ✅ Just completed
+- [x] Fixed Terminal Decline Model (FixedTerminalDeclineModel)
+- [x] Yield models (GOR, CGR, water cut) - forecast_with_yields workflow
 - [ ] Plotting integration with plotsmith
 - [ ] Anomaly detection integration with anomsmith
 - [ ] Spatial analysis integration with geosmith
@@ -81,7 +82,7 @@ This document outlines the migration of the decline curve analysis library from 
 - fixed_terminal_decline → ✅ Completed (variants.py, FixedTerminalDeclineModel)
 
 ### From pydca/decline_curve/yield_models.py
-- ConstantYield, DecliningYield, HyperbolicYield → Need to migrate
+- ConstantYield, DecliningYield, HyperbolicYield → ✅ Migrated (primitives/yields.py, forecast_with_yields workflow)
 
 ### From pydca/decline_curve/ensemble.py
 - EnsembleForecaster → Need to migrate
