@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from ressmith.objects.domain import ForecastResult
 from ressmith.workflows import fit_forecast
 
 

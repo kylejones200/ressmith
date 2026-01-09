@@ -26,6 +26,7 @@ from ressmith.primitives.decline import (
     fit_arps_hyperbolic,
     fit_arps_harmonic,
 )
+from ressmith.primitives.data_utils import extract_rate_data
 from ressmith.primitives.segmented import (
     check_continuity,
     fit_segment,
@@ -46,16 +47,12 @@ class ArpsExponentialModel(BaseDeclineModel):
         self._t0: float = 0.0
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsExponentialModel":
         """Fit exponential decline model."""
         # Extract rate data
-        if isinstance(data, ProductionSeries):
-            rate = data.oil  # Default to oil phase
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
@@ -125,16 +122,12 @@ class ArpsHyperbolicModel(BaseDeclineModel):
         self._t0: float = 0.0
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsHyperbolicModel":
         """Fit hyperbolic decline model."""
         # Extract rate data
-        if isinstance(data, ProductionSeries):
-            rate = data.oil  # Default to oil phase
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
@@ -205,16 +198,12 @@ class ArpsHarmonicModel(BaseDeclineModel):
         self._t0: float = 0.0
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsHarmonicModel":
         """Fit harmonic decline model."""
         # Extract rate data
-        if isinstance(data, ProductionSeries):
-            rate = data.oil  # Default to oil phase
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
@@ -290,16 +279,12 @@ class LinearDeclineModel(BaseDeclineModel):
         self._start_date: datetime | None = None
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "LinearDeclineModel":
         """Fit linear decline model using least squares."""
         # Extract rate data
-        if isinstance(data, ProductionSeries):
-            rate = data.oil  # Default to oil phase
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
@@ -402,16 +387,12 @@ class SegmentedDeclineModel(BaseDeclineModel):
             raise ValueError("Number of kinds must match number of segments")
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "SegmentedDeclineModel":
         """Fit segmented decline model."""
         # Extract rate data
-        if isinstance(data, ProductionSeries):
-            rate = data.oil  # Default to oil phase
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         if not isinstance(time_index, pd.DatetimeIndex):
             raise ValueError("Time index must be DatetimeIndex for segmented model")
@@ -596,15 +577,12 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
         self._start_date: datetime | None = None
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "HyperbolicToExponentialSwitchModel":
         """Fit switch model."""
-        if isinstance(data, ProductionSeries):
-            rate = data.oil
-            time_index = data.time_index
-        else:
-            rate = data.rate
-            time_index = data.time_index
+        # Extract rate data
+        rate_series, time_index = extract_rate_data(data)
+        rate = rate_series.values
 
         t = (time_index - time_index[0]).days.values.astype(float)
         hyper_guess = initial_guess_hyperbolic(t, rate)

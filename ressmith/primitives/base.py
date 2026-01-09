@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Any
 
 import numpy as np
+import pandas as pd
 
 from ressmith.objects.domain import (
     EconResult,
@@ -78,7 +79,7 @@ class BaseDeclineModel(BaseEstimator):
     """Base class for decline curve models."""
 
     def fit(
-        self, data: ProductionSeries | RateSeries, **fit_params: Any
+        self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "BaseDeclineModel":
         """
         Fit the decline model to data.

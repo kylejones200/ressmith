@@ -53,11 +53,10 @@ def test_assert_rate_series_alignment():
     series = RateSeries(time_index=time_index, rate=rate)
     assert_rate_series_alignment(series)  # Should not raise
 
-    # Invalid: misaligned
+    # Invalid: misaligned (dataclass __post_init__ will catch this)
     rate_bad = np.array([1.0, 2.0])
-    series_bad = RateSeries(time_index=time_index, rate=rate_bad)
     with pytest.raises(ValueError, match="length"):
-        assert_rate_series_alignment(series_bad)
+        RateSeries(time_index=time_index, rate=rate_bad)
 
 
 def test_assert_alignment():
@@ -71,11 +70,10 @@ def test_assert_alignment():
     )
     assert_alignment(series)  # Should not raise
 
-    # Invalid: misaligned
+    # Invalid: misaligned (dataclass __post_init__ will catch this)
     oil_bad = np.array([1.0, 2.0])
-    series_bad = ProductionSeries(
-        time_index=time_index, oil=oil_bad, gas=gas, water=water
-    )
     with pytest.raises(ValueError, match="length"):
-        assert_alignment(series_bad)
+        ProductionSeries(
+            time_index=time_index, oil=oil_bad, gas=gas, water=water
+        )
 
