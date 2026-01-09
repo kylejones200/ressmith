@@ -47,6 +47,9 @@ This document outlines the migration of the decline curve analysis library from 
 ### Phase 6: Integration Features (In Progress)
 - [x] Scenario analysis workflows (evaluate_scenarios, scenario_summary)
 - [x] Backtesting workflows (walk_forward_backtest)
+- [x] Model comparison workflows (compare_models)
+- [x] EUR estimation workflows (estimate_eur)
+- [ ] Fixed Terminal Decline Model (FixedTerminalDeclineModel) - ✅ Just completed
 - [ ] Plotting integration with plotsmith
 - [ ] Anomaly detection integration with anomsmith
 - [ ] Spatial analysis integration with geosmith
@@ -60,19 +63,32 @@ This document outlines the migration of the decline curve analysis library from 
 - HyperbolicToExponential → Need to migrate
 
 ### From pydca/decline_curve/segmented_decline.py
-- DeclineSegment → Port to Layer 1 Objects
-- SegmentedDeclineResult → Port to Layer 1 Objects
-- Segmented decline logic → Port to Layer 2 Primitives
+- DeclineSegment → ✅ Already in ressmith as Layer 1 Object
+- SegmentedDeclineResult → ✅ Already in ressmith as Layer 1 Object
+- Segmented decline logic → ✅ Already in ressmith as Layer 2 Primitives
 
 ### From pydca/decline_curve/fitting.py
-- Enhanced fitting logic with ramp detection
-- Parameter validation
-- Initial guess heuristics
+- Enhanced fitting logic with ramp detection → ✅ Completed (fitting_utils.py)
+- Parameter validation → ✅ Completed (constraints.py)
+- Initial guess heuristics → ✅ Completed
 
 ### From pydca/decline_curve/economics.py
-- Enhanced economics calculations
-- Multi-phase economics
-- Scenario analysis
+- Enhanced economics calculations → ✅ Completed
+- Multi-phase economics → ✅ Completed
+- Scenario analysis → ✅ Completed (scenarios.py)
+
+### From pydca/decline_curve/decline_variants.py
+- fixed_terminal_decline → ✅ Completed (variants.py, FixedTerminalDeclineModel)
+
+### From pydca/decline_curve/yield_models.py
+- ConstantYield, DecliningYield, HyperbolicYield → Need to migrate
+
+### From pydca/decline_curve/ensemble.py
+- EnsembleForecaster → Need to migrate
+
+### From pydca/decline_curve/uncertainty.py or monte_carlo.py
+- Monte Carlo simulation → Need to migrate
+- Probabilistic forecasts → Need to migrate
 
 ## Integration Points
 

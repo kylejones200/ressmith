@@ -8,11 +8,14 @@ __version__ = "0.1.0"
 
 # Public API: Workflows
 from ressmith.workflows import (
+    compare_models,
+    estimate_eur,
     evaluate_economics,
     evaluate_scenarios,
     fit_forecast,
     fit_segmented_forecast,
     forecast_many,
+    forecast_with_yields,
     full_run,
     scenario_summary,
     walk_forward_backtest,
@@ -39,10 +42,13 @@ __all__ = [
     "fit_forecast",
     "fit_segmented_forecast",
     "forecast_many",
+    "forecast_with_yields",
     "evaluate_economics",
     "evaluate_scenarios",
     "scenario_summary",
     "walk_forward_backtest",
+    "compare_models",
+    "estimate_eur",
     "full_run",
     # Base types
     "BaseDeclineModel",
