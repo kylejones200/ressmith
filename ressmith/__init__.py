@@ -9,6 +9,7 @@ __version__ = "0.1.0"
 # Public API: Workflows
 from ressmith.workflows import (
     compare_models,
+    ensemble_forecast,
     estimate_eur,
     evaluate_economics,
     evaluate_scenarios,
@@ -17,6 +18,7 @@ from ressmith.workflows import (
     forecast_many,
     forecast_with_yields,
     full_run,
+    probabilistic_forecast,
     scenario_summary,
     walk_forward_backtest,
 )
@@ -43,6 +45,8 @@ __all__ = [
     "fit_segmented_forecast",
     "forecast_many",
     "forecast_with_yields",
+    "ensemble_forecast",
+    "probabilistic_forecast",
     "evaluate_economics",
     "evaluate_scenarios",
     "scenario_summary",
