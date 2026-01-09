@@ -42,29 +42,29 @@ def main() -> int:
         code = run_command(["pip", "install", "timesmith>=0.2.0"])
 
     if code != 0:
-        print("❌ Failed to install timesmith")
+        print("Failed to install timesmith")
         return code
 
     # Step 2: Install ressmith in development mode
     print("\n2. Installing ressmith in development mode...")
     code = run_command(["pip", "install", "-e", "."], cwd=repo_root)
     if code != 0:
-        print("❌ Failed to install ressmith")
+        print("Failed to install ressmith")
         return code
 
     # Step 3: Run integration example
     print("\n3. Running integration example...")
     example_path = repo_root / "examples" / "integration_timesmith.py"
     if not example_path.exists():
-        print(f"❌ Example not found: {example_path}")
+        print(f"Example not found: {example_path}")
         return 1
 
     code = run_command([sys.executable, str(example_path)], cwd=repo_root)
     if code != 0:
-        print("❌ Integration example failed")
+        print("Integration example failed")
         return code
 
-    print("\n✅ Smoke test passed!")
+    print("\nSmoke test passed!")
     return 0
 
 

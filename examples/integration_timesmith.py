@@ -86,7 +86,7 @@ def main():
     for key, value in params.items():
         print(f"  {key}: {value:.4f}")
 
-    print("\n✅ Integration successful!")
+    print("\nIntegration successful!")
     print("   - timesmith.typing.SeriesLike validated input")
     print("   - ressmith fit and forecast completed")
     print("   - No circular imports or type conflicts")
