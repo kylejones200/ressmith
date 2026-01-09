@@ -14,8 +14,18 @@ from ressmith.workflows.core import (
     full_run,
 )
 from ressmith.workflows.ensemble import ensemble_forecast, ensemble_forecast_custom
+from ressmith.workflows.integrations import (
+    detect_outliers,
+    plot_forecast,
+    spatial_analysis,
+)
 from ressmith.workflows.io import read_csv_production, write_csv_results
 from ressmith.workflows.multiphase import forecast_with_yields
+from ressmith.workflows.portfolio import (
+    aggregate_portfolio_forecast,
+    analyze_portfolio,
+    rank_wells,
+)
 from ressmith.workflows.scenarios import evaluate_scenarios, scenario_summary
 from ressmith.workflows.uncertainty import probabilistic_forecast
 
@@ -36,5 +46,11 @@ __all__ = [
     "ensemble_forecast",
     "ensemble_forecast_custom",
     "probabilistic_forecast",
+    "plot_forecast",
+    "detect_outliers",
+    "spatial_analysis",
+    "analyze_portfolio",
+    "aggregate_portfolio_forecast",
+    "rank_wells",
 ]
 

@@ -8,7 +8,10 @@ __version__ = "0.1.0"
 
 # Public API: Workflows
 from ressmith.workflows import (
+    aggregate_portfolio_forecast,
+    analyze_portfolio,
     compare_models,
+    detect_outliers,
     ensemble_forecast,
     estimate_eur,
     evaluate_economics,
@@ -18,8 +21,11 @@ from ressmith.workflows import (
     forecast_many,
     forecast_with_yields,
     full_run,
+    plot_forecast,
     probabilistic_forecast,
+    rank_wells,
     scenario_summary,
+    spatial_analysis,
     walk_forward_backtest,
 )
 
@@ -54,6 +60,12 @@ __all__ = [
     "compare_models",
     "estimate_eur",
     "full_run",
+    "plot_forecast",
+    "detect_outliers",
+    "spatial_analysis",
+    "analyze_portfolio",
+    "aggregate_portfolio_forecast",
+    "rank_wells",
     # Base types
     "BaseDeclineModel",
     "BaseEconModel",
