@@ -21,6 +21,8 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
+          # Install timesmith first if available, otherwise skip (for now)
+          pip install "timesmith>=0.1.0" || echo "timesmith not available, skipping"
           pip install -e ".[dev]"
 
       - name: Test
