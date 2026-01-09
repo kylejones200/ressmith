@@ -85,11 +85,11 @@ This document outlines the migration of the decline curve analysis library from 
 - ConstantYield, DecliningYield, HyperbolicYield → ✅ Migrated (primitives/yields.py, forecast_with_yields workflow)
 
 ### From pydca/decline_curve/ensemble.py
-- EnsembleForecaster → Need to migrate
+- EnsembleForecaster → ✅ Migrated (primitives/ensemble.py, workflows/ensemble.py)
 
 ### From pydca/decline_curve/uncertainty.py or monte_carlo.py
-- Monte Carlo simulation → Need to migrate
-- Probabilistic forecasts → Need to migrate
+- Monte Carlo simulation → ✅ Migrated (primitives/uncertainty.py, workflows/uncertainty.py)
+- Probabilistic forecasts → ✅ Migrated (probabilistic_forecast workflow)
 
 ## Integration Points
 
