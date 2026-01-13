@@ -2,10 +2,7 @@
 Decline curve primitives: ARPS models and fitting functions.
 """
 
-from typing import Any, Optional
-
 import numpy as np
-import pandas as pd
 
 try:
     from scipy import optimize
@@ -77,9 +74,7 @@ def arps_hyperbolic(
     return qi / (1.0 + b * di * (t - t0)) ** (1.0 / b)
 
 
-def arps_harmonic(
-    t: np.ndarray, qi: float, di: float, t0: float = 0.0
-) -> np.ndarray:
+def arps_harmonic(t: np.ndarray, qi: float, di: float, t0: float = 0.0) -> np.ndarray:
     """
     Compute harmonic decline rates (b=1 case of hyperbolic).
 
@@ -122,9 +117,7 @@ def cumulative_hyperbolic(
         return (qi / di) * np.log(1.0 + di * dt)
     else:
         # General hyperbolic
-        return (qi / (di * (1 - b))) * (
-            1.0 - (1.0 + b * di * dt) ** ((b - 1.0) / b)
-        )
+        return (qi / (di * (1 - b))) * (1.0 - (1.0 + b * di * dt) ** ((b - 1.0) / b))
 
 
 def cumulative_harmonic(
@@ -163,7 +156,7 @@ def _objective_harmonic(
 
 
 def fit_arps_exponential(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit exponential decline model.
@@ -218,7 +211,7 @@ def fit_arps_exponential(
 
 
 def fit_arps_hyperbolic(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit hyperbolic decline model.
@@ -276,7 +269,7 @@ def fit_arps_hyperbolic(
 
 
 def fit_arps_harmonic(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit harmonic decline model.
@@ -328,4 +321,3 @@ def fit_arps_harmonic(
                 best_params = {"qi": qi, "di": di}
 
     return best_params
-

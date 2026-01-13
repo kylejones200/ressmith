@@ -142,4 +142,3 @@ def initial_guess_harmonic(t: np.ndarray, q: np.ndarray) -> dict[str, float]:
         di = 0.01
 
     return {"qi": qi, "di": di}
-

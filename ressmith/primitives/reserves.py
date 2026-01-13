@@ -4,8 +4,6 @@ EUR (Estimated Ultimate Recovery) estimation primitives.
 Layer 2 primitives for calculating EUR from decline curves.
 """
 
-from typing import Optional
-
 import numpy as np
 
 # Note: EUR calculations use analytical formulas, not numerical integration
@@ -175,7 +173,7 @@ def calculate_eur_from_params(
     model_name: str,
     t_max: float = 360.0,
     econ_limit: float = 10.0,
-) -> Optional[float]:
+) -> float | None:
     """
     Calculate EUR from fitted parameters.
 
@@ -216,6 +214,5 @@ def calculate_eur_from_params(
             # Unknown model, use exponential as default
             return calculate_eur_exponential(qi, di, t_max, econ_limit)
 
-    except Exception as e:
+    except Exception:
         return None
-

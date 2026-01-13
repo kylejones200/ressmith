@@ -5,18 +5,16 @@ This module provides variants that prevent unrealistic long-term forecasts
 by transitioning to fixed terminal decline rates.
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
-import pandas as pd
 
 from ressmith.primitives.decline import (
     arps_exponential,
     arps_hyperbolic,
-    arps_harmonic,
     fit_arps_exponential,
-    fit_arps_hyperbolic,
     fit_arps_harmonic,
+    fit_arps_hyperbolic,
 )
 
 
@@ -55,7 +53,6 @@ def fixed_terminal_decline_rate(
     """
     rates = np.zeros_like(t)
 
-    # Calculate rate at transition
     if t_switch > 0:
         t_transition = np.array([t_switch])
         if b > 0:
@@ -66,7 +63,6 @@ def fixed_terminal_decline_rate(
         q_switch = qi
         t_switch = 0.0
 
-    # Generate rates
     for i, t_val in enumerate(t):
         if t_val <= t_switch:
             # Initial hyperbolic phase
@@ -88,7 +84,7 @@ def fit_fixed_terminal_decline(
     kind: Literal["exponential", "harmonic", "hyperbolic"] = "hyperbolic",
     terminal_decline_rate: float = 0.05,
     transition_criteria: Literal["rate", "time"] = "rate",
-    transition_value: Optional[float] = None,
+    transition_value: float | None = None,
 ) -> dict[str, float]:
     """
     Fit decline curve with transition to fixed terminal decline rate.
@@ -127,10 +123,8 @@ def fit_fixed_terminal_decline(
     qi = initial_params["qi"]
     di = initial_params["di"]
 
-    # Convert terminal decline rate from annual to monthly
     terminal_decline_monthly = terminal_decline_rate / 12.0
 
-    # Determine transition point
     if transition_criteria == "time":
         if transition_value is None:
             transition_time = 60.0  # 5 years default
@@ -150,7 +144,6 @@ def fit_fixed_terminal_decline(
             # Exponential: constant decline, transition immediately or at fixed time
             transition_time = 0.0
 
-    # Calculate rate at transition
     t_transition = np.array([transition_time])
     if b > 0:
         q_transition = arps_hyperbolic(t_transition, qi, di, b)[0]
@@ -167,4 +160,3 @@ def fit_fixed_terminal_decline(
         "terminal_decline_rate_annual": terminal_decline_rate,
         "kind": kind,
     }
-

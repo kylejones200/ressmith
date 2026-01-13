@@ -5,12 +5,11 @@ Provides workflows for probabilistic forecasting and risk analysis.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
-from ressmith.objects.domain import ForecastResult, ForecastSpec
-from ressmith.primitives.base import BaseDeclineModel
+from ressmith.objects.domain import ForecastSpec
 from ressmith.primitives.uncertainty import monte_carlo_forecast
 from ressmith.workflows.core import fit_forecast
 
@@ -22,8 +21,8 @@ def probabilistic_forecast(
     model_name: str = "arps_hyperbolic",
     horizon: int = 24,
     n_samples: int = 1000,
-    param_uncertainty: Optional[dict[str, tuple[float, str]]] = None,
-    seed: Optional[int] = None,
+    param_uncertainty: dict[str, tuple[float, str]] | None = None,
+    seed: int | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
@@ -61,7 +60,7 @@ def probabilistic_forecast(
     Examples
     --------
     >>> from ressmith import probabilistic_forecast
-    >>> 
+    >>>
     >>> # Generate probabilistic forecast
     >>> result = probabilistic_forecast(
     ...     data,
@@ -88,7 +87,6 @@ def probabilistic_forecast(
         data, model_name=model_name, horizon=horizon, **kwargs
     )
 
-    # Get the fitted model (we need the model instance for Monte Carlo)
     from ressmith.primitives.models import (
         ArpsExponentialModel,
         ArpsHarmonicModel,
@@ -98,7 +96,6 @@ def probabilistic_forecast(
         HyperbolicToExponentialSwitchModel,
         LinearDeclineModel,
         PowerLawDeclineModel,
-        SegmentedDeclineModel,
         StretchedExponentialModel,
     )
     from ressmith.tasks.core import FitDeclineTask
@@ -120,9 +117,8 @@ def probabilistic_forecast(
 
     model = model_map[model_name](**kwargs)
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
-    fitted_model, _ = task.run(data, horizon=None)  # Don't generate forecast yet
+    fitted_model, _ = task.run(data, horizon=None)
 
-    # Generate probabilistic forecast
     forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
     result = monte_carlo_forecast(
         fitted_model,
@@ -134,4 +130,3 @@ def probabilistic_forecast(
 
     logger.info("Probabilistic forecast completed")
     return result
-

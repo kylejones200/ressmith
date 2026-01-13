@@ -2,12 +2,8 @@
 Parameter constraints and bounds for decline curve models.
 """
 
-from typing import Any, Optional, Tuple
 
-import numpy as np
-
-
-def get_default_bounds(model_name: str) -> dict[str, Tuple[float, Optional[float]]]:
+def get_default_bounds(model_name: str) -> dict[str, tuple[float, float | None]]:
     """
     Get default parameter bounds for a model.
 
@@ -22,7 +18,7 @@ def get_default_bounds(model_name: str) -> dict[str, Tuple[float, Optional[float
         Dictionary mapping parameter names to (lower, upper) bounds.
         None for upper bound means no upper limit.
     """
-    bounds: dict[str, Tuple[float, Optional[float]]] = {}
+    bounds: dict[str, tuple[float, float | None]] = {}
 
     if model_name == "exponential":
         bounds = {
@@ -75,7 +71,7 @@ def get_default_bounds(model_name: str) -> dict[str, Tuple[float, Optional[float
 
 def validate_parameters(
     params: dict[str, float],
-    bounds: dict[str, Tuple[float, Optional[float]]],
+    bounds: dict[str, tuple[float, float | None]],
     model_name: str = "unknown",
 ) -> list[str]:
     """
@@ -117,7 +113,7 @@ def validate_parameters(
 
 def clip_parameters(
     params: dict[str, float],
-    bounds: dict[str, Tuple[float, Optional[float]]],
+    bounds: dict[str, tuple[float, float | None]],
 ) -> dict[str, float]:
     """
     Clip parameters to bounds.
@@ -149,9 +145,9 @@ def clip_parameters(
 
 
 def get_scipy_bounds(
-    bounds: dict[str, Tuple[float, Optional[float]]],
+    bounds: dict[str, tuple[float, float | None]],
     param_order: list[str],
-) -> list[Tuple[float, Optional[float]]]:
+) -> list[tuple[float, float | None]]:
     """
     Convert bounds dictionary to scipy format.
 
@@ -175,4 +171,3 @@ def get_scipy_bounds(
             # Default bounds if not specified
             scipy_bounds.append((0.0, None))
     return scipy_bounds
-

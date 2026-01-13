@@ -7,27 +7,37 @@ if the packages are not available.
 """
 
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
 try:
     import plotsmith
+
     HAS_PLOTSMITH = True
 except ImportError:
     HAS_PLOTSMITH = False
+    plotsmith = None  # type: ignore[assignment, unused-ignore]
 
 try:
     import anomsmith
+
     HAS_ANOMSMITH = True
 except ImportError:
     HAS_ANOMSMITH = False
+    anomsmith = None  # type: ignore[assignment, unused-ignore]
 
 try:
     import geosmith
+
     HAS_GEOSMITH = True
 except ImportError:
     HAS_GEOSMITH = False
+    geosmith = None  # type: ignore[assignment, unused-ignore]
 
 from ressmith.objects.domain import ForecastResult
 
@@ -36,10 +46,10 @@ logger = logging.getLogger(__name__)
 
 def plot_forecast(
     forecast: ForecastResult,
-    historical: Optional[pd.Series] = None,
-    title: Optional[str] = None,
+    historical: pd.Series | None = None,
+    title: str | None = None,
     **kwargs: Any,
-) -> Any:
+) -> tuple["Figure", "Axes"] | None:
     """
     Plot forecast using plotsmith (if available).
 
@@ -48,45 +58,51 @@ def plot_forecast(
     forecast : ForecastResult
         Forecast result to plot
     historical : pd.Series, optional
-        Historical production data to overlay
+        Historical production data to overlay (will be combined with forecast)
     title : str, optional
         Plot title
     **kwargs
-        Additional arguments passed to plotsmith
+        Additional arguments passed to plotsmith.plot_timeseries
 
     Returns
     -------
-    Any
-        Plot object from plotsmith (or None if plotsmith not available)
+    tuple[Figure, Axes] | None
+        Matplotlib figure and axes tuple, or None if plotsmith not available
 
     Examples
     --------
     >>> from ressmith import fit_forecast, plot_forecast
-    >>> 
+    >>>
     >>> forecast, _ = fit_forecast(data, model_name='arps_hyperbolic', horizon=24)
-    >>> plot_forecast(forecast, historical=data['oil'], title='Production Forecast')
+    >>> fig, ax = plot_forecast(forecast, historical=data['oil'], title='Production Forecast')
     """
-    if not HAS_PLOTSMITH:
-        logger.warning(
-            "plotsmith not available. Install with: pip install plotsmith"
-        )
+    if not HAS_PLOTSMITH or plotsmith is None:
+        logger.warning("plotsmith not available. Install with: pip install plotsmith")
         return None
 
     try:
-        # Try to use plotsmith.workflows.plot_timeseries if available
-        if hasattr(plotsmith, "workflows"):
-            if hasattr(plotsmith.workflows, "plot_timeseries"):
-                return plotsmith.workflows.plot_timeseries(
-                    forecast.yhat, historical=historical, title=title or "Forecast", **kwargs
-                )
-        # Fallback: try direct import
-        elif hasattr(plotsmith, "plot_timeseries"):
-            return plotsmith.plot_timeseries(
-                forecast.yhat, historical=historical, title=title or "Forecast", **kwargs
+        if historical is not None:
+            plot_data = pd.DataFrame(
+                {"Historical": historical, "Forecast": forecast.yhat}
             )
         else:
-            logger.warning("plotsmith.plot_timeseries not found")
-            return None
+            plot_data = forecast.yhat
+
+        bands = None
+        if forecast.intervals is not None:
+            bands = {
+                "confidence": (
+                    forecast.intervals.iloc[:, 0],
+                    forecast.intervals.iloc[:, -1],
+                )
+            }
+
+        return plotsmith.plot_timeseries(
+            data=plot_data,
+            bands=bands,
+            title=title or "Production Forecast",
+            **kwargs,
+        )
     except Exception as e:
         logger.warning(f"Error plotting with plotsmith: {e}")
         return None
@@ -117,26 +133,23 @@ def detect_outliers(
     Examples
     --------
     >>> from ressmith import detect_outliers
-    >>> 
+    >>>
     >>> outliers = detect_outliers(data['oil'], method='statistical')
     >>> clean_data = data[~outliers]
     """
-    if not HAS_ANOMSMITH:
-        logger.warning(
-            "anomsmith not available. Install with: pip install anomsmith"
-        )
-        # Return all False (no outliers detected)
+    if not HAS_ANOMSMITH or anomsmith is None:
+        logger.warning("anomsmith not available. Install with: pip install anomsmith")
         if isinstance(data, pd.Series):
             return pd.Series(False, index=data.index)
         else:
             return pd.DataFrame(False, index=data.index, columns=data.columns)
 
     try:
-        if hasattr(anomsmith, "workflows"):
-            if hasattr(anomsmith.workflows, "detect_outliers"):
-                return anomsmith.workflows.detect_outliers(
-                    data, method=method, **kwargs
-                )
+        # Try workflows first, then direct function
+        if hasattr(anomsmith, "workflows") and hasattr(
+            anomsmith.workflows, "detect_outliers"
+        ):
+            return anomsmith.workflows.detect_outliers(data, method=method, **kwargs)
         elif hasattr(anomsmith, "detect_outliers"):
             return anomsmith.detect_outliers(data, method=method, **kwargs)
         else:
@@ -155,10 +168,10 @@ def detect_outliers(
 
 def spatial_analysis(
     well_data: pd.DataFrame,
-    well_locations: Optional[pd.DataFrame] = None,
+    well_locations: pd.DataFrame | None = None,
     analysis_type: str = "kriging",
     **kwargs: Any,
-) -> Any:
+) -> dict[str, Any] | None:
     """
     Perform spatial analysis using geosmith (if available).
 
@@ -175,13 +188,13 @@ def spatial_analysis(
 
     Returns
     -------
-    Any
+    dict[str, Any] | None
         Spatial analysis results (or None if geosmith not available)
 
     Examples
     --------
     >>> from ressmith import spatial_analysis
-    >>> 
+    >>>
     >>> # Perform kriging for EUR estimation
     >>> results = spatial_analysis(
     ...     well_data,
@@ -190,17 +203,16 @@ def spatial_analysis(
     ...     variable='eur'
     ... )
     """
-    if not HAS_GEOSMITH:
-        logger.warning(
-            "geosmith not available. Install with: pip install geosmith"
-        )
+    if not HAS_GEOSMITH or geosmith is None:
+        logger.warning("geosmith not available. Install with: pip install geosmith")
         return None
 
     try:
-        if hasattr(geosmith, "workflows"):
-            if hasattr(geosmith.workflows, analysis_type):
-                func = getattr(geosmith.workflows, analysis_type)
-                return func(well_data, well_locations=well_locations, **kwargs)
+        if hasattr(geosmith, "workflows") and hasattr(
+            geosmith.workflows, analysis_type
+        ):
+            func = getattr(geosmith.workflows, analysis_type)
+            return func(well_data, well_locations=well_locations, **kwargs)
         elif hasattr(geosmith, analysis_type):
             func = getattr(geosmith, analysis_type)
             return func(well_data, well_locations=well_locations, **kwargs)
@@ -211,3 +223,143 @@ def spatial_analysis(
         logger.warning(f"Error performing spatial analysis with geosmith: {e}")
         return None
 
+
+def create_well_pointset(
+    portfolio_results: pd.DataFrame,
+    well_locations: pd.DataFrame,
+    variable: str = "eur",
+) -> Any | None:
+    """
+    Create geosmith PointSet from portfolio results and well locations.
+
+    Parameters
+    ----------
+    portfolio_results : pd.DataFrame
+        Results from analyze_portfolio with well_id column
+    well_locations : pd.DataFrame
+        DataFrame with columns: well_id, latitude, longitude
+    variable : str
+        Variable to map: 'eur', 'npv', 'irr', etc. (default: 'eur')
+
+    Returns
+    -------
+    PointSet | None
+        geosmith PointSet object, or None if geosmith not available
+
+    Examples
+    --------
+    >>> from ressmith import analyze_portfolio, create_well_pointset
+    >>>
+    >>> portfolio = analyze_portfolio(well_data)
+    >>> pointset = create_well_pointset(portfolio, locations, variable='eur')
+    >>> print(pointset.attributes.head())
+    """
+    if not HAS_GEOSMITH or geosmith is None:
+        logger.warning("geosmith not available. Install with: pip install geosmith")
+        return None
+
+    try:
+        import numpy as np
+        from geosmith.objects import PointSet
+
+        if "well_id" not in portfolio_results.columns:
+            raise ValueError("portfolio_results must have 'well_id' column")
+        if variable not in portfolio_results.columns:
+            raise ValueError(f"Variable '{variable}' not found in portfolio_results")
+
+        if "well_id" not in well_locations.columns:
+            raise ValueError("well_locations must have 'well_id' column")
+        if (
+            "latitude" not in well_locations.columns
+            or "longitude" not in well_locations.columns
+        ):
+            raise ValueError(
+                "well_locations must have 'latitude' and 'longitude' columns"
+            )
+
+        merged = portfolio_results.merge(well_locations, on="well_id", how="inner")
+
+        if len(merged) == 0:
+            logger.warning("No matching wells found between results and locations")
+            return None
+
+        coordinates = np.column_stack(
+            [merged["longitude"].values, merged["latitude"].values]
+        )
+
+        attributes = merged[[variable]].copy()
+
+        pointset = PointSet(coordinates=coordinates, attributes=attributes)
+
+        logger.info(f"Created PointSet with {len(pointset)} wells")
+        return pointset
+    except Exception as e:
+        logger.warning(f"Error creating PointSet: {e}")
+        return None
+
+
+def map_portfolio_spatially(
+    portfolio_results: pd.DataFrame,
+    well_locations: pd.DataFrame,
+    variable: str = "eur",
+    **kwargs: Any,
+) -> dict[str, Any] | None:
+    """
+    Create spatial map of portfolio metrics using geosmith.
+
+    Combines ressmith portfolio analysis with geosmith spatial capabilities.
+
+    Parameters
+    ----------
+    portfolio_results : pd.DataFrame
+        Results from analyze_portfolio
+    well_locations : pd.DataFrame
+        DataFrame with columns: well_id, latitude, longitude
+    variable : str
+        Variable to map: 'eur', 'npv', 'irr' (default: 'eur')
+    **kwargs
+        Additional arguments for geosmith.make_features
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Spatial analysis results with PointSet and features, or None if geosmith unavailable
+
+    Examples
+    --------
+    >>> from ressmith import analyze_portfolio, map_portfolio_spatially
+    >>>
+    >>> portfolio = analyze_portfolio(well_data, econ_spec=econ)
+    >>> spatial_map = map_portfolio_spatially(
+    ...     portfolio,
+    ...     locations,
+    ...     variable='npv'
+    ... )
+    >>> print(spatial_map['pointset'].attributes.head())
+    """
+    if not HAS_GEOSMITH or geosmith is None:
+        logger.warning("geosmith not available. Install with: pip install geosmith")
+        return None
+
+    try:
+        pointset = create_well_pointset(portfolio_results, well_locations, variable)
+        if pointset is None:
+            return None
+
+        if hasattr(geosmith, "make_features"):
+            features = geosmith.make_features(
+                pointset, operations=kwargs.get("operations", {})
+            )
+            return {
+                "pointset": pointset,
+                "features": features,
+                "variable": variable,
+            }
+        else:
+            return {
+                "pointset": pointset,
+                "variable": variable,
+            }
+    except Exception as e:
+        logger.warning(f"Error mapping portfolio spatially: {e}")
+        return None

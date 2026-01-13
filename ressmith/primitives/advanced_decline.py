@@ -2,8 +2,6 @@
 Advanced decline curve models: Power Law, Duong, Stretched Exponential.
 """
 
-from typing import Any, Optional
-
 import numpy as np
 
 try:
@@ -144,7 +142,7 @@ def _objective_stretched_exponential(
 
 
 def fit_power_law(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit power law decline model.
@@ -205,7 +203,7 @@ def fit_power_law(
 
 
 def fit_duong(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit Duong decline model.
@@ -266,7 +264,7 @@ def fit_duong(
 
 
 def fit_stretched_exponential(
-    t: np.ndarray, q: np.ndarray, use_scipy: Optional[bool] = None
+    t: np.ndarray, q: np.ndarray, use_scipy: bool | None = None
 ) -> dict[str, float]:
     """
     Fit stretched exponential decline model.
@@ -324,4 +322,3 @@ def fit_stretched_exponential(
                     best_params = {"qi": qi, "tau": tau, "beta": beta}
 
     return best_params
-

@@ -3,7 +3,7 @@ Decline model classes wrapping primitive functions.
 """
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -15,18 +15,7 @@ from ressmith.objects.domain import (
     ForecastSpec,
     ProductionSeries,
     RateSeries,
-    SegmentedDeclineResult,
 )
-from ressmith.primitives.base import BaseDeclineModel
-from ressmith.primitives.decline import (
-    arps_exponential,
-    arps_hyperbolic,
-    arps_harmonic,
-    fit_arps_exponential,
-    fit_arps_hyperbolic,
-    fit_arps_harmonic,
-)
-from ressmith.primitives.data_utils import extract_rate_data
 from ressmith.primitives.advanced_decline import (
     duong_rate,
     fit_duong,
@@ -35,22 +24,32 @@ from ressmith.primitives.advanced_decline import (
     power_law_rate,
     stretched_exponential_rate,
 )
-from ressmith.primitives.variants import (
-    fit_fixed_terminal_decline,
-    fixed_terminal_decline_rate,
-)
+from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.constraints import (
     clip_parameters,
     get_default_bounds,
     validate_parameters,
 )
+from ressmith.primitives.data_utils import extract_rate_data
+from ressmith.primitives.decline import (
+    arps_exponential,
+    arps_harmonic,
+    arps_hyperbolic,
+    fit_arps_exponential,
+    fit_arps_harmonic,
+    fit_arps_hyperbolic,
+)
+from ressmith.primitives.fitting_utils import initial_guess_hyperbolic
 from ressmith.primitives.segmented import (
     check_continuity,
     fit_segment,
     predict_segment,
 )
 from ressmith.primitives.switch import hyperbolic_to_exponential_rate
-from ressmith.primitives.fitting_utils import initial_guess_hyperbolic
+from ressmith.primitives.variants import (
+    fit_fixed_terminal_decline,
+    fixed_terminal_decline_rate,
+)
 
 
 class ArpsExponentialModel(BaseDeclineModel):
@@ -67,16 +66,12 @@ class ArpsExponentialModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsExponentialModel":
         """Fit exponential decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
-        # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_arps_exponential(t, rate)
-        # Validate and clip parameters
         bounds = get_default_bounds("exponential")
         warnings = validate_parameters(params, bounds, "exponential")
         if warnings:
@@ -91,7 +86,6 @@ class ArpsExponentialModel(BaseDeclineModel):
         """Generate forecast."""
         self._check_fitted()
 
-        # Generate forecast time index
         if self._start_date is None:
             raise ValueError("Model not fitted")
         start = pd.Timestamp(self._start_date)
@@ -99,15 +93,12 @@ class ArpsExponentialModel(BaseDeclineModel):
             start=start, periods=spec.horizon, freq=spec.frequency
         )
 
-        # Convert to days from start
         t_forecast = (forecast_index - start).days.values.astype(float)
 
-        # Predict rates
         qi = self._fitted_params["qi"]
         di = self._fitted_params["di"]
         yhat = arps_exponential(t_forecast, qi, di, self._t0)
 
-        # Create result
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
             model_name="arps_exponential",
@@ -115,9 +106,7 @@ class ArpsExponentialModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -148,16 +137,12 @@ class ArpsHyperbolicModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsHyperbolicModel":
         """Fit hyperbolic decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
-        # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_arps_hyperbolic(t, rate)
-        # Validate and clip parameters
         bounds = get_default_bounds("hyperbolic")
         warnings = validate_parameters(params, bounds, "hyperbolic")
         if warnings:
@@ -172,7 +157,6 @@ class ArpsHyperbolicModel(BaseDeclineModel):
         """Generate forecast."""
         self._check_fitted()
 
-        # Generate forecast time index
         if self._start_date is None:
             raise ValueError("Model not fitted")
         start = pd.Timestamp(self._start_date)
@@ -180,16 +164,13 @@ class ArpsHyperbolicModel(BaseDeclineModel):
             start=start, periods=spec.horizon, freq=spec.frequency
         )
 
-        # Convert to days from start
         t_forecast = (forecast_index - start).days.values.astype(float)
 
-        # Predict rates
         qi = self._fitted_params["qi"]
         di = self._fitted_params["di"]
         b = self._fitted_params["b"]
         yhat = arps_hyperbolic(t_forecast, qi, di, b, self._t0)
 
-        # Create result
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
             model_name="arps_hyperbolic",
@@ -197,9 +178,7 @@ class ArpsHyperbolicModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -230,16 +209,12 @@ class ArpsHarmonicModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "ArpsHarmonicModel":
         """Fit harmonic decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
-        # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_arps_harmonic(t, rate)
-        # Validate and clip parameters
         bounds = get_default_bounds("harmonic")
         warnings = validate_parameters(params, bounds, "harmonic")
         if warnings:
@@ -254,7 +229,6 @@ class ArpsHarmonicModel(BaseDeclineModel):
         """Generate forecast."""
         self._check_fitted()
 
-        # Generate forecast time index
         if self._start_date is None:
             raise ValueError("Model not fitted")
         start = pd.Timestamp(self._start_date)
@@ -262,15 +236,12 @@ class ArpsHarmonicModel(BaseDeclineModel):
             start=start, periods=spec.horizon, freq=spec.frequency
         )
 
-        # Convert to days from start
         t_forecast = (forecast_index - start).days.values.astype(float)
 
-        # Predict rates
         qi = self._fitted_params["qi"]
         di = self._fitted_params["di"]
         yhat = arps_harmonic(t_forecast, qi, di, self._t0)
 
-        # Create result
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
             model_name="arps_harmonic",
@@ -278,9 +249,7 @@ class ArpsHarmonicModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -317,11 +286,9 @@ class LinearDeclineModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "LinearDeclineModel":
         """Fit linear decline model using least squares."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
-        # Convert time to days from start
         t = (time_index - time_index[0]).days.values.astype(float)
 
         # Linear regression: q = q0 - m*t
@@ -343,7 +310,6 @@ class LinearDeclineModel(BaseDeclineModel):
         """Generate forecast."""
         self._check_fitted()
 
-        # Generate forecast time index
         if self._start_date is None:
             raise ValueError("Model not fitted")
         start = pd.Timestamp(self._start_date)
@@ -351,15 +317,13 @@ class LinearDeclineModel(BaseDeclineModel):
             start=start, periods=spec.horizon, freq=spec.frequency
         )
 
-        # Convert to days from start
         t_forecast = (forecast_index - start).days.values.astype(float)
 
-        # Predict rates: q = q0 - m*t
+        # Linear: q = q0 - m*t
         q0 = self._fitted_params["q0"]
         m = self._fitted_params["m"]
         yhat = np.maximum(q0 - m * t_forecast, 0.0)  # Ensure non-negative
 
-        # Create result
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
             model_name="linear_decline",
@@ -367,9 +331,7 @@ class LinearDeclineModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -392,7 +354,7 @@ class SegmentedDeclineModel(BaseDeclineModel):
     def __init__(
         self,
         segment_dates: list[tuple[datetime, datetime]],
-        kinds: Optional[list[Literal["exponential", "harmonic", "hyperbolic"]]] = None,
+        kinds: list[Literal["exponential", "harmonic", "hyperbolic"]] | None = None,
         enforce_continuity: bool = True,
         **params: Any,
     ) -> None:
@@ -425,7 +387,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "SegmentedDeclineModel":
         """Fit segmented decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
@@ -434,7 +395,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
 
         self._start_date = time_index[0].to_pydatetime()
 
-        # Validate and sort segment dates
         sorted_segments = sorted(self.segment_dates, key=lambda x: x[0])
         for i in range(len(sorted_segments) - 1):
             if sorted_segments[i][1] > sorted_segments[i + 1][0]:
@@ -447,7 +407,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
         self._continuity_errors = []
 
         for i, (start_date, end_date) in enumerate(sorted_segments):
-            # Find indices for this segment
             mask = (time_index >= pd.Timestamp(start_date)) & (
                 time_index < pd.Timestamp(end_date)
             )
@@ -459,17 +418,12 @@ class SegmentedDeclineModel(BaseDeclineModel):
                 )
                 continue
 
-            # Convert time to days from start
-            t_segment = (segment_series.index - time_index[0]).days.values.astype(
-                float
-            )
+            t_segment = (segment_series.index - time_index[0]).days.values.astype(float)
             q_segment = segment_series.values
 
             try:
-                # Fit segment
                 params = fit_segment(t_segment, q_segment, self.kinds[i])
 
-                # Create segment object
                 start_idx = time_index.get_loc(segment_series.index[0])
                 end_idx = time_index.get_loc(segment_series.index[-1]) + 1
 
@@ -483,7 +437,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
                 )
                 segments.append(segment)
 
-                # Check continuity with previous segment
                 if self.enforce_continuity and len(segments) > 1:
                     prev_segment = segments[-2]
                     curr_segment = segments[-1]
@@ -510,21 +463,16 @@ class SegmentedDeclineModel(BaseDeclineModel):
         if len(self._fitted_segments) == 0:
             raise ValueError("No segments fitted")
 
-        # Generate forecast by concatenating segment forecasts
         forecast_parts = []
 
         for i, segment in enumerate(self._fitted_segments):
-            # Calculate time range for this segment
             if i == 0:
                 t_segment = np.arange(segment.t_start, segment.t_end, 1.0)
             else:
-                # Continue from where previous segment ended
                 t_segment = np.arange(0, segment.t_end - segment.t_start, 1.0)
 
-            # Predict for this segment
             q_segment = predict_segment(t_segment, segment.parameters, segment.kind)
 
-            # Create index for this segment
             if i == 0 and self._start_date:
                 start = pd.Timestamp(self._start_date)
                 n_periods = len(q_segment)
@@ -553,17 +501,16 @@ class SegmentedDeclineModel(BaseDeclineModel):
         else:
             full_forecast = pd.Series(dtype=float)
 
-        # Create result
-        yhat_series = pd.Series(full_forecast.values, index=full_forecast.index, name="forecast")
+        yhat_series = pd.Series(
+            full_forecast.values, index=full_forecast.index, name="forecast"
+        )
         model_spec = DeclineSpec(
             model_name="segmented_decline",
             parameters={"segments": len(self._fitted_segments)},
             start_date=self._start_date or datetime.now(),
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     def get_segments(self) -> list[DeclineSegment]:
         """Get fitted segments."""
@@ -600,8 +547,8 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
 
     def __init__(
         self,
-        t_switch: Optional[float] = None,
-        di_exp: Optional[float] = None,
+        t_switch: float | None = None,
+        di_exp: float | None = None,
         **params: Any,
     ) -> None:
         """Initialize switch model."""
@@ -615,7 +562,6 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "HyperbolicToExponentialSwitchModel":
         """Fit switch model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
@@ -672,9 +618,7 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -690,6 +634,7 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
             "supports_intervals": False,
         }
 
+
 class PowerLawDeclineModel(BaseDeclineModel):
     """Power law decline model."""
 
@@ -703,13 +648,11 @@ class PowerLawDeclineModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "PowerLawDeclineModel":
         """Fit power law decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_power_law(t, rate)
         bounds = get_default_bounds("power_law")
         warnings = validate_parameters(params, bounds, "power_law")
@@ -747,9 +690,7 @@ class PowerLawDeclineModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -779,13 +720,11 @@ class DuongModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "DuongModel":
         """Fit Duong decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_duong(t, rate)
         bounds = get_default_bounds("duong")
         warnings = validate_parameters(params, bounds, "duong")
@@ -823,9 +762,7 @@ class DuongModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -855,13 +792,11 @@ class StretchedExponentialModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "StretchedExponentialModel":
         """Fit stretched exponential decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_stretched_exponential(t, rate)
         bounds = get_default_bounds("stretched_exponential")
         warnings = validate_parameters(params, bounds, "stretched_exponential")
@@ -899,9 +834,7 @@ class StretchedExponentialModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:
@@ -917,6 +850,7 @@ class StretchedExponentialModel(BaseDeclineModel):
             "supports_intervals": False,
         }
 
+
 class FixedTerminalDeclineModel(BaseDeclineModel):
     """
     Fixed terminal decline model.
@@ -930,7 +864,7 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
         kind: Literal["exponential", "harmonic", "hyperbolic"] = "hyperbolic",
         terminal_decline_rate: float = 0.05,
         transition_criteria: Literal["rate", "time"] = "rate",
-        transition_value: Optional[float] = None,
+        transition_value: float | None = None,
         **params: Any,
     ) -> None:
         """
@@ -959,13 +893,11 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
         self, data: ProductionSeries | RateSeries | pd.DataFrame, **fit_params: Any
     ) -> "FixedTerminalDeclineModel":
         """Fit fixed terminal decline model."""
-        # Extract rate data
         rate_series, time_index = extract_rate_data(data)
         rate = rate_series.values
 
         t = (time_index - time_index[0]).days.values.astype(float)
 
-        # Fit model
         params = fit_fixed_terminal_decline(
             t,
             rate,
@@ -1008,9 +940,7 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
             start_date=self._start_date,
         )
 
-        return ForecastResult(
-            yhat=yhat_series, metadata={}, model_spec=model_spec
-        )
+        return ForecastResult(yhat=yhat_series, metadata={}, model_spec=model_spec)
 
     @property
     def tags(self) -> dict[str, Any]:

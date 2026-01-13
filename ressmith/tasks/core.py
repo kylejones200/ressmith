@@ -3,8 +3,9 @@ Core task classes for ResSmith.
 """
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ class FitDeclineTask:
     def __init__(
         self,
         model: BaseDeclineModel,
-        column_mapping: Optional[dict[str, str]] = None,
+        column_mapping: dict[str, str] | None = None,
         phase: str = "oil",
     ) -> None:
         """
@@ -62,7 +63,7 @@ class FitDeclineTask:
     def run(
         self,
         data: pd.DataFrame | pd.Series,
-        horizon: Optional[int] = None,
+        horizon: int | None = None,
     ) -> tuple[BaseDeclineModel, ForecastResult]:
         """
         Run fit task.
@@ -79,23 +80,25 @@ class FitDeclineTask:
         tuple
             (fitted_model, forecast_result)
         """
-        # Convert to Layer 1 objects
         if isinstance(data, pd.Series):
+            try:
+                from timesmith.typing.validators import assert_series_like
+
+                assert_series_like(data, name="data")
+            except ImportError:
+                pass
+
             time_index = data.index
             if not isinstance(time_index, pd.DatetimeIndex):
                 raise ValueError("Series index must be DatetimeIndex")
+
             rate = data.values
-            rate_series = RateSeries(
-                time_index=time_index, rate=rate, units={}
-            )
-            # Validate
+            rate_series = RateSeries(time_index=time_index, rate=rate, units={})
             assert_monotonic_time(time_index)
             assert_positive_rates(rate)
             assert_rate_series_alignment(rate_series)
-            # Fit
             fitted_model = self.model.fit(rate_series)
         else:
-            # DataFrame case
             time_col = self.column_mapping.get("time", data.index.name or "index")
             if time_col == "index":
                 time_index = data.index
@@ -105,7 +108,6 @@ class FitDeclineTask:
             if not isinstance(time_index, pd.DatetimeIndex):
                 raise ValueError("Time column must be datetime")
 
-            # Extract phase data
             phase_col = self.column_mapping.get(self.phase, self.phase)
             if phase_col not in data.columns:
                 raise ValueError(f"Phase column '{phase_col}' not found")
@@ -122,22 +124,16 @@ class FitDeclineTask:
                 water=water.values if hasattr(water, "values") else water,
                 units={},
             )
-            # Validate
             assert_monotonic_time(time_index)
             assert_positive_rates(rate, name=self.phase)
             assert_alignment(prod_series)
-            # Fit
             fitted_model = self.model.fit(prod_series)
 
-        # Generate forecast if horizon specified
         if horizon is not None:
             forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
             forecast_result = fitted_model.predict(forecast_spec)
         else:
-            # Return empty forecast result
-            forecast_result = ForecastResult(
-                yhat=pd.Series(dtype=float), metadata={}
-            )
+            forecast_result = ForecastResult(yhat=pd.Series(dtype=float), metadata={})
 
         return fitted_model, forecast_result
 
@@ -146,7 +142,7 @@ class ForecastTask:
     """Task for generating forecasts from fitted models."""
 
     def __init__(
-        self, model: BaseDeclineModel, in_sample_data: Optional[RateSeries] = None
+        self, model: BaseDeclineModel, in_sample_data: RateSeries | None = None
     ) -> None:
         """
         Initialize forecast task.
@@ -175,23 +171,19 @@ class ForecastTask:
         tuple
             (forecast_result, diagnostics_table)
         """
-        # Generate forecast
         result = self.model.predict(spec)
 
-        # Compute diagnostics if in-sample data available
         diagnostics_rows = [
             {"metric": "horizon", "value": spec.horizon},
             {"metric": "frequency", "value": spec.frequency},
         ]
 
         if self.in_sample_data is not None:
-            # Generate in-sample predictions for diagnostics
             in_sample_spec = ForecastSpec(
                 horizon=len(self.in_sample_data.rate), frequency=spec.frequency
             )
             in_sample_pred = self.model.predict(in_sample_spec)
 
-            # Compute diagnostics
             q_obs = self.in_sample_data.rate
             q_pred = in_sample_pred.yhat.values[: len(q_obs)]
 
@@ -205,11 +197,9 @@ class ForecastTask:
                 ]
             )
 
-            # Add quality flags
             for flag, value in diag.quality_flags.items():
                 diagnostics_rows.append({"metric": f"flag_{flag}", "value": value})
 
-            # Add warnings
             if diag.warnings:
                 diagnostics_rows.append(
                     {"metric": "warnings", "value": "; ".join(diag.warnings)}
@@ -223,7 +213,7 @@ class ForecastTask:
 class EconTask:
     """Task for economics evaluation."""
 
-    def __init__(self, econ_model: Optional[BaseEconModel] = None) -> None:
+    def __init__(self, econ_model: BaseEconModel | None = None) -> None:
         """Initialize economics task."""
         self.econ_model = econ_model
 
@@ -245,20 +235,16 @@ class EconTask:
         tuple
             (econ_result, summary_dict)
         """
-        # Build cashflows
         cashflows = cashflow_from_forecast(forecast, spec)
 
-        # Compute NPV and IRR
         net_cf = cashflows["net_cashflow"].values
         npv_value = npv(net_cf, spec.discount_rate)
         irr_value = irr(net_cf)
 
-        # Compute payout time
         cumulative_cf = np.cumsum(net_cf)
         payout_idx = np.where(cumulative_cf >= 0)[0]
         payout_time = float(payout_idx[0]) if len(payout_idx) > 0 else None
 
-        # Create result
         result = EconResult(
             cashflows=cashflows,
             npv=npv_value,
@@ -267,7 +253,6 @@ class EconTask:
             metadata={},
         )
 
-        # Summary
         summary = {
             "npv": npv_value,
             "irr": irr_value,
@@ -369,4 +354,3 @@ class BatchTask:
                     )
 
         return pd.DataFrame(results)
-

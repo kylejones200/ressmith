@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from ressmith.objects.domain import (
@@ -43,9 +42,7 @@ class BaseObject(ABC):
 
     def __repr__(self) -> str:
         """String representation."""
-        params_str = ", ".join(
-            f"{k}={v!r}" for k, v in self._params.items()
-        )
+        params_str = ", ".join(f"{k}={v!r}" for k, v in self._params.items())
         return f"{self.__class__.__name__}({params_str})"
 
     @property
@@ -70,9 +67,7 @@ class BaseEstimator(BaseObject):
     def _check_fitted(self) -> None:
         """Raise error if not fitted."""
         if not self._fitted:
-            raise ValueError(
-                f"{self.__class__.__name__} must be fitted before use"
-            )
+            raise ValueError(f"{self.__class__.__name__} must be fitted before use")
 
 
 class BaseDeclineModel(BaseEstimator):
@@ -100,9 +95,7 @@ class BaseDeclineModel(BaseEstimator):
         return self
 
     @abstractmethod
-    def predict(
-        self, spec: ForecastSpec
-    ) -> ForecastResult:
+    def predict(self, spec: ForecastSpec) -> ForecastResult:
         """
         Generate forecast.
 
@@ -157,7 +150,4 @@ class BaseEconModel(BaseObject):
         EconResult
             Economics results
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__}.evaluate not implemented"
-        )
-
+        raise NotImplementedError(f"{self.__class__.__name__}.evaluate not implemented")

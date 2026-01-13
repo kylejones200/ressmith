@@ -3,18 +3,19 @@ Core workflow functions for ResSmith.
 """
 
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 
 from ressmith.objects.domain import (
+    DeclineSegment,
     EconResult,
     EconSpec,
     ForecastResult,
     ForecastSpec,
 )
-from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.models import (
     ArpsExponentialModel,
     ArpsHarmonicModel,
@@ -27,7 +28,7 @@ from ressmith.primitives.models import (
     SegmentedDeclineModel,
     StretchedExponentialModel,
 )
-from ressmith.tasks.core import BatchTask, EconTask, FitDeclineTask, ForecastTask
+from ressmith.tasks.core import BatchTask, EconTask, FitDeclineTask
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,6 @@ def fit_forecast(
     """
     logger.info(f"Starting fit_forecast with model={model_name}, horizon={horizon}")
 
-    # Create model
     model_map = {
         "arps_exponential": ArpsExponentialModel,
         "arps_hyperbolic": ArpsHyperbolicModel,
@@ -76,11 +76,9 @@ def fit_forecast(
 
     model = model_map[model_name](**kwargs)
 
-    # Create and run fit task
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
     fitted_model, forecast_result = task.run(data, horizon=horizon)
 
-    # Extract parameters
     params = {}
     if hasattr(fitted_model, "_fitted_params"):
         params = fitted_model._fitted_params.copy()
@@ -129,28 +127,26 @@ def forecast_many(
             forecast, params = fit_forecast(
                 data, model_name=model_name, horizon=horizon, **kwargs
             )
-            # Compute EUR (simplified: sum of forecast)
             eur = forecast.yhat.sum() if len(forecast.yhat) > 0 else 0.0
             return {
                 "fit_params": params,
                 "eur": eur,
-                "npv": None,  # Would need econ spec
+                "npv": None,
             }
         except Exception as e:
             logger.error(f"Error processing {well_id}: {e}")
             raise
 
-    # Create and run batch task
     batch_task = BatchTask(process_well, parallel=parallel)
     results = batch_task.run(well_ids)
 
-    logger.info(f"Completed forecast_many. Success: {results['success'].sum()}/{len(results)}")
+    logger.info(
+        f"Completed forecast_many. Success: {results['success'].sum()}/{len(results)}"
+    )
     return results
 
 
-def evaluate_economics(
-    forecast: ForecastResult, spec: EconSpec
-) -> EconResult:
+def evaluate_economics(forecast: ForecastResult, spec: EconSpec) -> EconResult:
     """
     Evaluate economics for a forecast.
 
@@ -177,7 +173,7 @@ def full_run(
     data: pd.DataFrame,
     model_name: str = "arps_hyperbolic",
     horizon: int = 24,
-    econ_spec: Optional[EconSpec] = None,
+    econ_spec: EconSpec | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
@@ -224,11 +220,11 @@ def full_run(
 def fit_segmented_forecast(
     data: pd.DataFrame,
     segment_dates: list[tuple[datetime, datetime]],
-    kinds: Optional[list[Literal["exponential", "harmonic", "hyperbolic"]]] = None,
+    kinds: list[Literal["exponential", "harmonic", "hyperbolic"]] | None = None,
     horizon: int = 24,
     enforce_continuity: bool = True,
     **kwargs: Any,
-) -> tuple[Any, list[Any], list[str]]:
+) -> tuple[ForecastResult, list[DeclineSegment], list[str]]:
     """
     Fit a segmented decline model and generate forecast.
 
@@ -257,7 +253,6 @@ def fit_segmented_forecast(
         f"horizon={horizon}"
     )
 
-    # Create model
     model = SegmentedDeclineModel(
         segment_dates=segment_dates,
         kinds=kinds,
@@ -265,14 +260,11 @@ def fit_segmented_forecast(
         **kwargs,
     )
 
-    # Fit model
     fitted_model = model.fit(data)
 
-    # Generate forecast
     forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
     forecast_result = fitted_model.predict(forecast_spec)
 
-    # Get segments and errors
     segments = fitted_model.get_segments()
     continuity_errors = fitted_model.get_continuity_errors()
 
@@ -282,4 +274,3 @@ def fit_segmented_forecast(
     )
 
     return forecast_result, segments, continuity_errors
-

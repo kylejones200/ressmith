@@ -52,10 +52,8 @@ def hyperbolic_to_exponential_rate(
         else:
             q[mask_hyper] = arps_hyperbolic(t_hyper, qi, di, b)
 
-    # Exponential phase
     mask_exp = t >= t_switch
     if np.any(mask_exp):
-        # Compute rate at switch point
         if b == 0.0:
             q_switch = arps_exponential(np.array([t_switch]), qi, di)[0]
         else:
@@ -65,4 +63,3 @@ def hyperbolic_to_exponential_rate(
         q[mask_exp] = arps_exponential(t_exp, q_switch, di_exp)
 
     return q
-

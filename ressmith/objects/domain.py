@@ -6,10 +6,11 @@ Immutable dataclasses representing wells, production data, forecasts, and econom
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 # Note: timesmith.typing is available for type hints if needed
 # from timesmith.typing import SeriesLike, PanelLike
 
@@ -34,17 +35,15 @@ class ProductionSeries:
     oil: np.ndarray
     gas: np.ndarray
     water: np.ndarray
-    choke: Optional[np.ndarray] = None
-    pressure: Optional[np.ndarray] = None
+    choke: np.ndarray | None = None
+    pressure: np.ndarray | None = None
     units: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Validate alignment of arrays."""
         n = len(self.time_index)
         if len(self.oil) != n or len(self.gas) != n or len(self.water) != n:
-            raise ValueError(
-                f"All arrays must have length {n} matching time_index"
-            )
+            raise ValueError(f"All arrays must have length {n} matching time_index")
         if self.choke is not None and len(self.choke) != n:
             raise ValueError(f"choke array must have length {n}")
         if self.pressure is not None and len(self.pressure) != n:
@@ -92,7 +91,7 @@ class DeclineSpec:
     model_name: str
     parameters: dict[str, Any]
     start_date: datetime
-    phase: Optional[str] = None  # 'oil', 'gas', 'water', or None for total
+    phase: str | None = None  # 'oil', 'gas', 'water', or None for total
 
 
 @dataclass(frozen=True)
@@ -101,7 +100,7 @@ class ForecastSpec:
 
     horizon: int  # Number of periods
     frequency: str  # Pandas frequency string, e.g., 'D', 'M'
-    scenarios: Optional[dict[str, Any]] = None
+    scenarios: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -112,7 +111,7 @@ class EconSpec:
     opex: float  # Operating expense per period
     capex: float  # Capital expenditure (one-time)
     discount_rate: float
-    taxes: Optional[dict[str, float]] = None
+    taxes: dict[str, float] | None = None
     units: dict[str, str] = field(default_factory=dict)
 
 
@@ -121,9 +120,9 @@ class ForecastResult:
     """Forecast results."""
 
     yhat: pd.Series  # Point forecasts
-    intervals: Optional[pd.DataFrame] = None  # Optional prediction intervals
+    intervals: pd.DataFrame | None = None  # Optional prediction intervals
     metadata: dict[str, Any] = field(default_factory=dict)
-    model_spec: Optional[DeclineSpec] = None
+    model_spec: DeclineSpec | None = None
 
 
 @dataclass(frozen=True)
@@ -132,8 +131,8 @@ class EconResult:
 
     cashflows: pd.DataFrame
     npv: float
-    irr: Optional[float] = None
-    payout_time: Optional[float] = None  # Periods to payout
+    irr: float | None = None
+    payout_time: float | None = None  # Periods to payout
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -144,11 +143,11 @@ class DeclineSegment:
     kind: str  # "exponential", "harmonic", or "hyperbolic"
     parameters: dict[str, float]  # ARPS parameters: qi, di, b
     t_start: float = 0.0
-    t_end: Optional[float] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    start_cum: Optional[float] = None
-    end_cum: Optional[float] = None
+    t_end: float | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    start_cum: float | None = None
+    end_cum: float | None = None
 
     def __post_init__(self) -> None:
         """Validate segment parameters."""
@@ -175,4 +174,3 @@ class SegmentedDeclineResult:
     segments: list[DeclineSegment]
     forecast: pd.Series
     continuity_errors: list[str] = field(default_factory=list)
-

@@ -6,13 +6,12 @@ including aggregation, ranking, and portfolio-level economics.
 """
 
 import logging
-from typing import Any, Callable, Optional
+from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import EconResult, EconSpec, ForecastResult
-from ressmith.workflows.core import fit_forecast, full_run
+from ressmith.objects.domain import EconSpec, ForecastResult
+from ressmith.workflows.core import fit_forecast
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ def analyze_portfolio(
     well_data: dict[str, pd.DataFrame],
     model_name: str = "arps_hyperbolic",
     horizon: int = 24,
-    econ_spec: Optional[EconSpec] = None,
+    econ_spec: EconSpec | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
@@ -55,7 +54,7 @@ def analyze_portfolio(
     --------
     >>> from ressmith import analyze_portfolio
     >>> from ressmith.objects import EconSpec
-    >>> 
+    >>>
     >>> well_data = {
     ...     'well_1': df1,
     ...     'well_2': df2,
@@ -83,20 +82,18 @@ def analyze_portfolio(
             )
 
             # Estimate EUR
-            eur_result = estimate_eur(
-                data, model_name=model_name, **kwargs
-            )
+            eur_result = estimate_eur(data, model_name=model_name, **kwargs)
 
             # Evaluate economics if spec provided
             npv = None
             irr = None
             if econ_spec is not None:
                 from ressmith.workflows.core import evaluate_economics
+
                 econ_result = evaluate_economics(forecast, econ_spec)
                 npv = econ_result.npv
                 irr = econ_result.irr
 
-            # Extract fit quality if available
             fit_quality = {}
             if hasattr(forecast, "metadata") and "diagnostics" in forecast.metadata:
                 diag = forecast.metadata["diagnostics"]
@@ -106,26 +103,30 @@ def analyze_portfolio(
                     "mae": diag.mae if hasattr(diag, "mae") else None,
                 }
 
-            results.append({
-                "well_id": well_id,
-                "eur": eur_result.get("eur", 0.0),
-                "npv": npv,
-                "irr": irr,
-                "params": params,
-                "fit_quality": fit_quality,
-            })
+            results.append(
+                {
+                    "well_id": well_id,
+                    "eur": eur_result.get("eur", 0.0),
+                    "npv": npv,
+                    "irr": irr,
+                    "params": params,
+                    "fit_quality": fit_quality,
+                }
+            )
 
         except Exception as e:
             logger.warning(f"Failed to analyze well {well_id}: {e}")
-            results.append({
-                "well_id": well_id,
-                "eur": None,
-                "npv": None,
-                "irr": None,
-                "params": {},
-                "fit_quality": {},
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "well_id": well_id,
+                    "eur": None,
+                    "npv": None,
+                    "irr": None,
+                    "params": {},
+                    "fit_quality": {},
+                    "error": str(e),
+                }
+            )
 
     return pd.DataFrame(results)
 
@@ -161,7 +162,7 @@ def aggregate_portfolio_forecast(
     Examples
     --------
     >>> from ressmith import aggregate_portfolio_forecast
-    >>> 
+    >>>
     >>> portfolio_forecast = aggregate_portfolio_forecast(
     ...     well_data,
     ...     model_name='arps_hyperbolic',
@@ -187,7 +188,9 @@ def aggregate_portfolio_forecast(
 
     # Align all forecasts to same index
     base_index = forecasts[0].index
-    forecast_matrix = pd.DataFrame({i: f.reindex(base_index, method="nearest") for i, f in enumerate(forecasts)})
+    forecast_matrix = pd.DataFrame(
+        {i: f.reindex(base_index, method="nearest") for i, f in enumerate(forecasts)}
+    )
 
     # Aggregate
     if aggregation_method == "sum":
@@ -198,8 +201,6 @@ def aggregate_portfolio_forecast(
         aggregated = forecast_matrix.median(axis=1)
     else:
         raise ValueError(f"Unknown aggregation method: {aggregation_method}")
-
-    from ressmith.objects.domain import DeclineSpec
 
     return ForecastResult(
         yhat=pd.Series(aggregated, index=base_index, name="portfolio_forecast"),
@@ -235,7 +236,7 @@ def rank_wells(
     Examples
     --------
     >>> from ressmith import rank_wells
-    >>> 
+    >>>
     >>> ranked = rank_wells(portfolio_results, metric='npv')
     >>> print(ranked[['well_id', 'rank', 'npv']].head(10))
     """
@@ -247,4 +248,3 @@ def rank_wells(
     ranked.insert(0, "rank", range(1, len(ranked) + 1))
 
     return ranked
-

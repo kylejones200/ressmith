@@ -3,11 +3,11 @@ Model comparison and EUR estimation workflows.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
+import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import ForecastResult, ForecastSpec
 from ressmith.primitives.diagnostics import compute_diagnostics
 from ressmith.primitives.reserves import calculate_eur_from_params
 from ressmith.workflows.core import fit_forecast
@@ -49,7 +49,7 @@ def compare_models(
     Examples
     --------
     >>> from ressmith import compare_models
-    >>> 
+    >>>
     >>> results = compare_models(
     ...     data,
     ...     model_names=['arps_exponential', 'arps_hyperbolic', 'power_law'],
@@ -69,22 +69,18 @@ def compare_models(
                 data, model_name=model_name, horizon=horizon, phase=phase, **kwargs
             )
 
-            # Compute in-sample diagnostics (fit on full data, compare to actual)
             phase_col = kwargs.get("rate_col", phase)
             if phase_col not in data.columns:
                 continue
 
             actual_values = data[phase_col].values
-            # Generate in-sample forecast for diagnostics
             in_sample_forecast, _ = fit_forecast(
                 data, model_name=model_name, horizon=len(data), phase=phase, **kwargs
             )
             predicted_values = in_sample_forecast.yhat.values[: len(actual_values)]
 
-            # Compute diagnostics
             diag = compute_diagnostics(actual_values, predicted_values)
 
-            # Calculate EUR
             eur = calculate_eur_from_params(params, model_name)
 
             # Store result
@@ -97,7 +93,6 @@ def compare_models(
                 "eur": eur,
             }
 
-            # Add parameters
             for param_name, param_value in params.items():
                 row[f"param_{param_name}"] = param_value
 
@@ -161,7 +156,7 @@ def estimate_eur(
     Examples
     --------
     >>> from ressmith import estimate_eur
-    >>> 
+    >>>
     >>> result = estimate_eur(
     ...     data,
     ...     model_name='arps_hyperbolic',
@@ -173,12 +168,10 @@ def estimate_eur(
     """
     logger.info(f"Estimating EUR with model={model_name}, phase={phase}")
 
-    # Fit model to get parameters
     forecast, params = fit_forecast(
         data, model_name=model_name, horizon=24, phase=phase, **kwargs
     )
 
-    # Calculate EUR from parameters
     eur = calculate_eur_from_params(params, model_name, t_max, econ_limit)
 
     if eur is None:
@@ -194,4 +187,3 @@ def estimate_eur(
         "econ_limit": econ_limit,
         "metadata": {},
     }
-

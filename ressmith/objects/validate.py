@@ -37,8 +37,7 @@ def assert_units_present(units: dict[str, str], required: list[str]) -> None:
     missing = [key for key in required if key not in units]
     if missing:
         raise ValueError(
-            f"Missing required units: {missing}. "
-            f"Found units: {list(units.keys())}"
+            f"Missing required units: {missing}. " f"Found units: {list(units.keys())}"
         )
 
 
@@ -70,4 +69,3 @@ def assert_rate_series_alignment(series: RateSeries) -> None:
             f"rate array length {len(series.rate)} does not match "
             f"time_index length {len(series.time_index)}"
         )
-

@@ -5,14 +5,10 @@ Yield models compute secondary phase rates from primary phase rates.
 Examples: GOR (Gas-Oil Ratio), CGR (Condensate-Gas Ratio), water cut.
 """
 
-from typing import Optional
-
 import numpy as np
 
 
-def constant_yield_rate(
-    primary_rate: np.ndarray, yield_ratio: float
-) -> np.ndarray:
+def constant_yield_rate(primary_rate: np.ndarray, yield_ratio: float) -> np.ndarray:
     """
     Compute secondary rate with constant yield ratio.
 
@@ -157,7 +153,6 @@ def fit_declining_yield(
     dict
         Fitted parameters: {'yield_initial': float, 'decline_rate': float}
     """
-    # Calculate yield ratios
     valid_mask = primary_rate > 0
     if not np.any(valid_mask):
         return {"yield_initial": 0.0, "decline_rate": 0.0}
@@ -168,7 +163,10 @@ def fit_declining_yield(
     # Fit exponential decline to yield ratios
     # log(ratio) = log(yield_initial) - decline_rate * t
     if len(ratios) < 2:
-        return {"yield_initial": float(ratios[0]) if len(ratios) > 0 else 0.0, "decline_rate": 0.0}
+        return {
+            "yield_initial": float(ratios[0]) if len(ratios) > 0 else 0.0,
+            "decline_rate": 0.0,
+        }
 
     log_ratios = np.log(np.maximum(ratios, 1e-6))
     # Linear fit: log_ratio = log(yield_initial) - decline_rate * t
@@ -180,4 +178,3 @@ def fit_declining_yield(
         "yield_initial": max(0.0, yield_initial),
         "decline_rate": max(0.0, decline_rate),
     }
-

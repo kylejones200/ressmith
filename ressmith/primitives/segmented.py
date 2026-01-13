@@ -4,10 +4,9 @@ Segmented decline curve primitives.
 Functions for fitting and predicting segmented decline curves.
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
-import pandas as pd
 
 from ressmith.objects.domain import DeclineSegment
 from ressmith.primitives.decline import (
@@ -100,7 +99,7 @@ def check_continuity(
     segment2: DeclineSegment,
     t_transition: float,
     tolerance: float = 0.01,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """
     Check continuity between two segments at transition point.
 
@@ -120,19 +119,16 @@ def check_continuity(
     tuple
         (is_continuous, error_message)
     """
-    # Calculate rate at end of segment1
     t1_local = t_transition - segment1.t_start
-    q1_end = predict_segment(
-        np.array([t1_local]), segment1.parameters, segment1.kind
-    )[0]
+    q1_end = predict_segment(np.array([t1_local]), segment1.parameters, segment1.kind)[
+        0
+    ]
 
-    # Calculate rate at start of segment2
     t2_local = 0.0
     q2_start = predict_segment(
         np.array([t2_local]), segment2.parameters, segment2.kind
     )[0]
 
-    # Check continuity with tolerance
     abs_tolerance = max(q1_end, q2_start) * tolerance
     if abs(q1_end - q2_start) > abs_tolerance:
         return False, (
@@ -141,4 +137,3 @@ def check_continuity(
         )
 
     return True, None
-

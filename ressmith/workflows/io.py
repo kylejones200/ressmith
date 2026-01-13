@@ -4,7 +4,7 @@ I/O helpers for workflows.
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def read_csv_production(
     filepath: str | Path,
     time_column: str = "date",
-    rate_columns: Optional[dict[str, str]] = None,
+    rate_columns: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Read production data from CSV.
@@ -63,9 +63,7 @@ def write_csv_results(
     """
     logger.info(f"Writing results to {filepath}")
     if isinstance(results, dict):
-        # Convert dict to DataFrame if needed
         if "yhat" in results:
-            # Forecast result
             results = results["yhat"].to_frame()
         else:
             results = pd.DataFrame([results])
@@ -74,4 +72,3 @@ def write_csv_results(
         results.to_csv(filepath, **kwargs)
     else:
         raise ValueError(f"Cannot write type {type(results)} to CSV")
-

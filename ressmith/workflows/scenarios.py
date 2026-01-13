@@ -51,7 +51,7 @@ def evaluate_scenarios(
     --------
     >>> from ressmith import fit_forecast, evaluate_scenarios
     >>> from ressmith.objects import EconSpec
-    >>> 
+    >>>
     >>> forecast, _ = fit_forecast(data, model_name='arps_hyperbolic', horizon=24)
     >>> base_spec = EconSpec(
     ...     price_assumptions={'oil': 70.0},
@@ -69,10 +69,8 @@ def evaluate_scenarios(
     """
     logger.info(f"Evaluating {len(scenarios)} scenarios")
 
-    # Convert to EconResult objects
     results = {}
     for scenario_name, overrides in scenarios.items():
-        # Create modified spec for this scenario
         modified_spec = EconSpec(
             price_assumptions={
                 **base_spec.price_assumptions,
@@ -81,24 +79,24 @@ def evaluate_scenarios(
             opex=overrides.get("opex", base_spec.opex),
             capex=overrides.get("capex", base_spec.capex),
             discount_rate=overrides.get("discount_rate", base_spec.discount_rate),
-            taxes=overrides.get("taxes", base_spec.taxes) if overrides.get("taxes") is not None else base_spec.taxes,
+            taxes=(
+                overrides.get("taxes", base_spec.taxes)
+                if overrides.get("taxes") is not None
+                else base_spec.taxes
+            ),
             units=base_spec.units,
         )
 
-        # Build cashflows for this scenario
         cashflows_df = cashflow_from_forecast(forecast, modified_spec)
 
-        # Compute NPV and IRR
         net_cf = cashflows_df["net_cashflow"].values
         npv_value = npv(net_cf, modified_spec.discount_rate)
         irr_value = irr(net_cf)
 
-        # Compute payout time
         cumulative_cf = pd.Series(net_cf).cumsum()
         payout_idx = cumulative_cf[cumulative_cf >= 0].index
         payout_time = float(payout_idx[0]) if len(payout_idx) > 0 else None
 
-        # Create result
         result = EconResult(
             cashflows=cashflows_df,
             npv=npv_value,
@@ -139,7 +137,9 @@ def scenario_summary(
             "scenario": scenario_name,
             "npv": result.npv,
             "irr": result.irr if result.irr is not None else None,
-            "payout_time": result.payout_time if result.payout_time is not None else None,
+            "payout_time": (
+                result.payout_time if result.payout_time is not None else None
+            ),
             "total_revenue": result.cashflows["revenue"].sum(),
             "total_opex": abs(result.cashflows["opex"].sum()),
             "total_capex": abs(result.cashflows["capex"].sum()),
@@ -147,4 +147,3 @@ def scenario_summary(
         rows.append(row)
 
     return pd.DataFrame(rows)
-

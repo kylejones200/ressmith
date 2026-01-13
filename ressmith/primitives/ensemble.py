@@ -5,19 +5,15 @@ Provides methods for combining predictions from different models to improve
 accuracy and reliability.
 """
 
-from typing import Any, Callable, Literal, Optional
-
 import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import ForecastResult, ForecastSpec
-from ressmith.primitives.base import BaseDeclineModel
-from ressmith.primitives.diagnostics import compute_diagnostics
+from ressmith.objects.domain import ForecastResult
 
 
 def weighted_ensemble_forecast(
     forecasts: list[ForecastResult],
-    weights: Optional[list[float]] = None,
+    weights: list[float] | None = None,
 ) -> ForecastResult:
     """
     Combine multiple forecasts using weighted average.
@@ -49,12 +45,10 @@ def weighted_ensemble_forecast(
         total = sum(weights)
         weights = [w / total for w in weights]
 
-    # Align all forecasts to same index (use first forecast's index)
     base_index = forecasts[0].yhat.index
     combined_rates = np.zeros(len(base_index))
 
     for forecast, weight in zip(forecasts, weights):
-        # Reindex to base_index if needed
         if not forecast.yhat.index.equals(base_index):
             forecast_rates = forecast.yhat.reindex(base_index, method="nearest").values
         else:
@@ -62,7 +56,6 @@ def weighted_ensemble_forecast(
 
         combined_rates += weight * forecast_rates
 
-    # Create combined forecast
     combined_series = pd.Series(combined_rates, index=base_index, name="forecast")
     combined_metadata = {
         "ensemble_method": "weighted",
@@ -128,7 +121,7 @@ def median_ensemble_forecast(forecasts: list[ForecastResult]) -> ForecastResult:
 
 def confidence_weighted_ensemble(
     forecasts: list[ForecastResult],
-    in_sample_data: Optional[pd.Series] = None,
+    in_sample_data: pd.Series | None = None,
 ) -> ForecastResult:
     """
     Combine forecasts using confidence weights based on in-sample fit quality.
@@ -151,18 +144,14 @@ def confidence_weighted_ensemble(
         # Fall back to equal weights
         return weighted_ensemble_forecast(forecasts)
 
-    # Compute R² for each forecast (if available in metadata)
     weights = []
     for forecast in forecasts:
         if "r_squared" in forecast.metadata:
             r_squared = forecast.metadata["r_squared"]
-            # Use R² as weight (higher is better)
             weights.append(max(0.0, r_squared))
         else:
-            # Default weight if no diagnostics available
             weights.append(1.0)
 
-    # If all weights are zero, use equal weights
     if sum(weights) == 0:
         weights = [1.0 / len(forecasts)] * len(forecasts)
 

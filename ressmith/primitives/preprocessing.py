@@ -8,9 +8,7 @@ import pandas as pd
 
 def to_daily_time(time_index: pd.DatetimeIndex) -> pd.DatetimeIndex:
     """Convert time index to daily frequency."""
-    return pd.date_range(
-        start=time_index.min(), end=time_index.max(), freq="D"
-    )
+    return pd.date_range(start=time_index.min(), end=time_index.max(), freq="D")
 
 
 def resample_to_frequency(
@@ -31,9 +29,7 @@ def resample_to_frequency(
     pd.DatetimeIndex
         Resampled time index
     """
-    return pd.date_range(
-        start=time_index.min(), end=time_index.max(), freq=frequency
-    )
+    return pd.date_range(start=time_index.min(), end=time_index.max(), freq=frequency)
 
 
 def trim_to_start(
@@ -43,9 +39,7 @@ def trim_to_start(
     return time_index[time_index >= start_date]
 
 
-def compute_cum_from_rate(
-    time_index: pd.DatetimeIndex, rate: np.ndarray
-) -> np.ndarray:
+def compute_cum_from_rate(time_index: pd.DatetimeIndex, rate: np.ndarray) -> np.ndarray:
     """
     Compute cumulative from rate using trapezoidal integration.
 
@@ -131,4 +125,3 @@ def smooth_rate(
         return pd.Series(rate).rolling(window=window, center=True).mean().values
     else:
         raise ValueError(f"Unknown method: {method}")
-

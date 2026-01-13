@@ -6,7 +6,8 @@ forecast accuracy and reliability.
 """
 
 import logging
-from typing import Any, Callable, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -26,9 +27,9 @@ def ensemble_forecast(
     data: pd.DataFrame,
     model_names: list[str],
     method: Literal["weighted", "median", "confidence"] = "weighted",
-    weights: Optional[list[float]] = None,
+    weights: list[float] | None = None,
     horizon: int = 24,
-    in_sample_data: Optional[pd.Series] = None,
+    in_sample_data: pd.Series | None = None,
     **kwargs: Any,
 ) -> ForecastResult:
     """
@@ -59,7 +60,7 @@ def ensemble_forecast(
     Examples
     --------
     >>> from ressmith import ensemble_forecast
-    >>> 
+    >>>
     >>> # Combine multiple models
     >>> forecast = ensemble_forecast(
     ...     data,
@@ -72,14 +73,12 @@ def ensemble_forecast(
     """
     logger.info(f"Generating ensemble forecast with {len(model_names)} models")
 
-    # Generate forecasts from each model
     forecasts = []
     for model_name in model_names:
         try:
             forecast, params = fit_forecast(
                 data, model_name=model_name, horizon=horizon, **kwargs
             )
-            # Add model name to metadata
             forecast.metadata["model_name"] = model_name
             forecasts.append(forecast)
         except Exception as e:
@@ -111,7 +110,7 @@ def ensemble_forecast_custom(
     data: pd.DataFrame,
     model_factories: list[Callable[[], BaseDeclineModel]],
     method: Literal["weighted", "median", "confidence"] = "weighted",
-    weights: Optional[list[float]] = None,
+    weights: list[float] | None = None,
     horizon: int = 24,
     **kwargs: Any,
 ) -> ForecastResult:
@@ -140,10 +139,11 @@ def ensemble_forecast_custom(
     ForecastResult
         Combined ensemble forecast
     """
-    logger.info(f"Generating custom ensemble forecast with {len(model_factories)} models")
+    logger.info(
+        f"Generating custom ensemble forecast with {len(model_factories)} models"
+    )
 
-    from ressmith.tasks.core import FitDeclineTask, ForecastTask
-    from ressmith.objects.domain import ForecastSpec
+    from ressmith.tasks.core import FitDeclineTask
 
     forecasts = []
     for i, factory in enumerate(model_factories):
@@ -175,4 +175,3 @@ def ensemble_forecast_custom(
         raise ValueError(f"Unknown ensemble method: {method}")
 
     return result
-

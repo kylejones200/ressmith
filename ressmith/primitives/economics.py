@@ -2,8 +2,6 @@
 Economics primitives: cashflow, NPV, IRR calculations.
 """
 
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 
@@ -17,9 +15,7 @@ except ImportError:
 from ressmith.objects.domain import EconSpec, ForecastResult
 
 
-def cashflow_from_forecast(
-    forecast: ForecastResult, spec: EconSpec
-) -> pd.DataFrame:
+def cashflow_from_forecast(forecast: ForecastResult, spec: EconSpec) -> pd.DataFrame:
     """
     Build monthly cashflows from forecast rates, prices, and costs.
 
@@ -38,7 +34,6 @@ def cashflow_from_forecast(
     rates = forecast.yhat.values
     n_periods = len(rates)
 
-    # Initialize cashflows
     cashflows = pd.DataFrame(
         {
             "period": range(n_periods),
@@ -49,20 +44,15 @@ def cashflow_from_forecast(
         }
     )
 
-    # Apply capex in first period
     cashflows.loc[0, "capex"] = -spec.capex
 
-    # Compute revenue - multi-phase support
-    # If forecast has multi-phase data in metadata, use it
     revenue = np.zeros(n_periods)
     if "phases" in forecast.metadata:
-        # Multi-phase forecast
         phases = forecast.metadata["phases"]
         for phase, phase_rates in phases.items():
             if phase in spec.price_assumptions:
                 revenue += phase_rates * spec.price_assumptions[phase]
     else:
-        # Single-phase forecast - use price assumptions
         if "oil" in spec.price_assumptions:
             revenue = rates * spec.price_assumptions["oil"]
         elif "gas" in spec.price_assumptions:
@@ -70,13 +60,11 @@ def cashflow_from_forecast(
         elif "water" in spec.price_assumptions:
             revenue = rates * spec.price_assumptions["water"]
         else:
-            # Use first price assumption
             price = list(spec.price_assumptions.values())[0]
             revenue = rates * price
-    
+
     cashflows["revenue"] = revenue
 
-    # Apply taxes if specified
     if spec.taxes:
         tax_rate = list(spec.taxes.values())[0]
         taxable_income = cashflows["revenue"] + cashflows["opex"]
@@ -114,9 +102,7 @@ def npv(cashflows: np.ndarray, discount_rate: float) -> float:
     return np.sum(cashflows / discount_factors)
 
 
-def irr(
-    cashflows: np.ndarray, use_scipy: Optional[bool] = None
-) -> Optional[float]:
+def irr(cashflows: np.ndarray, use_scipy: bool | None = None) -> float | None:
     """
     Compute Internal Rate of Return.
 
@@ -136,7 +122,7 @@ def irr(
         use_scipy = HAS_SCIPY
 
     if use_scipy and HAS_SCIPY:
-        # Use scipy root finding
+
         def npv_func(rate: float) -> float:
             return npv(cashflows, rate)
 
@@ -149,13 +135,11 @@ def irr(
         except ValueError:
             pass
 
-    # Approximate IRR using grid search
     rates = np.linspace(-0.9, 2.0, 1000)
     npvs = [npv(cashflows, r) for r in rates]
     npvs = np.array(npvs)
     sign_changes = np.where(np.diff(np.sign(npvs)))[0]
     if len(sign_changes) > 0:
-        # Find zero crossing
         idx = sign_changes[0]
         if idx < len(rates) - 1:
             # Linear interpolation
@@ -192,7 +176,6 @@ def scenario_apply(
     """
     results = {}
     for scenario_name, overrides in scenarios.items():
-        # Create modified spec
         modified_spec = EconSpec(
             price_assumptions={
                 **spec.price_assumptions,
@@ -207,4 +190,3 @@ def scenario_apply(
         cashflows = cashflow_from_forecast(baseline_forecast, modified_spec)
         results[scenario_name] = cashflows
     return results
-

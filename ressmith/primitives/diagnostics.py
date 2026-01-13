@@ -125,27 +125,21 @@ def check_fit_quality(
     """
     flags: dict[str, bool] = {}
 
-    # Check for negative predictions
     flags["has_negative_predictions"] = bool(np.any(q_pred < 0))
 
-    # Check for monotonic decline (should be mostly decreasing)
     if len(q_pred) > 1:
         diff = np.diff(q_pred)
         declining_ratio = np.sum(diff < 0) / len(diff)
         flags["mostly_declining"] = declining_ratio > 0.7
 
-    # Check residual distribution
     if len(residuals) > 3:
-        # Check for systematic bias
         mean_residual = np.mean(residuals)
         flags["low_bias"] = abs(mean_residual) < np.std(residuals) * 0.5
 
-        # Check for outliers
         std_residual = np.std(residuals)
         outliers = np.abs(residuals) > 3 * std_residual
         flags["few_outliers"] = np.sum(outliers) < len(residuals) * 0.1
 
-    # Check R² threshold
     ss_res = np.sum(residuals**2)
     ss_tot = np.sum((q_obs - q_obs.mean()) ** 2)
     r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
@@ -181,8 +175,6 @@ def compute_diagnostics(
     quality_flags = check_fit_quality(q_obs, q_pred, residuals)
 
     warnings: list[str] = []
-
-    # Generate warnings
     if quality_flags.get("has_negative_predictions", False):
         warnings.append("Model predicts negative rates")
     if not quality_flags.get("mostly_declining", True):
@@ -201,4 +193,3 @@ def compute_diagnostics(
         quality_flags=quality_flags,
         warnings=warnings,
     )
-

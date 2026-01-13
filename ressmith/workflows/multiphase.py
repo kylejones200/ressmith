@@ -6,18 +6,17 @@ primary phase (oil) using yield models (GOR, CGR, water cut).
 """
 
 import logging
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import ForecastResult, ForecastSpec
+from ressmith.objects.domain import ForecastResult
 from ressmith.primitives.yields import (
     constant_yield_rate,
     declining_yield_rate,
     fit_constant_yield,
     fit_declining_yield,
-    hyperbolic_yield_rate,
 )
 from ressmith.workflows.core import fit_forecast
 
@@ -29,7 +28,9 @@ def forecast_with_yields(
     primary_phase: str = "oil",
     associated_phases: list[str] = ["gas", "water"],
     model_name: str = "arps_hyperbolic",
-    yield_models: Optional[dict[str, Literal["constant", "declining", "hyperbolic"]]] = None,
+    yield_models: (
+        dict[str, Literal["constant", "declining", "hyperbolic"]] | None
+    ) = None,
     horizon: int = 24,
     **kwargs: Any,
 ) -> dict[str, ForecastResult]:
@@ -62,7 +63,7 @@ def forecast_with_yields(
     Examples
     --------
     >>> from ressmith import forecast_with_yields
-    >>> 
+    >>>
     >>> # Forecast oil, gas, and water
     >>> results = forecast_with_yields(
     ...     data,
@@ -85,7 +86,6 @@ def forecast_with_yields(
 
     results: dict[str, ForecastResult] = {primary_phase: primary_forecast}
 
-    # Prepare time array for yield calculations
     time_index = primary_forecast.yhat.index
     if isinstance(time_index, pd.DatetimeIndex):
         start_date = time_index[0]
@@ -95,7 +95,6 @@ def forecast_with_yields(
 
     primary_rates = primary_forecast.yhat.values
 
-    # Forecast associated phases using yield models
     if yield_models is None:
         yield_models = {}
 
@@ -104,21 +103,20 @@ def forecast_with_yields(
             logger.warning(f"Phase '{phase}' not in data, skipping")
             continue
 
-        # Fit yield model from historical data if not specified
         if phase not in yield_models:
-            # Auto-detect yield model type (default to constant)
             yield_model_type = "constant"
         else:
             yield_model_type = yield_models[phase]
 
-        # Fit yield model from historical data
         primary_hist = data[primary_phase].values
         phase_hist = data[phase].values
 
         # Filter valid data
         valid_mask = (primary_hist > 0) & (phase_hist >= 0)
         if not np.any(valid_mask):
-            logger.warning(f"No valid data for {phase} yield model, using zero forecast")
+            logger.warning(
+                f"No valid data for {phase} yield model, using zero forecast"
+            )
             phase_forecast = pd.Series(
                 np.zeros(len(primary_rates)), index=time_index, name=phase
             )
@@ -135,7 +133,9 @@ def forecast_with_yields(
         # Fit yield model
         if yield_model_type == "constant":
             yield_params = fit_constant_yield(t_hist, primary_valid, phase_valid)
-            phase_rates = constant_yield_rate(primary_rates, yield_params["yield_ratio"])
+            phase_rates = constant_yield_rate(
+                primary_rates, yield_params["yield_ratio"]
+            )
         elif yield_model_type == "declining":
             yield_params = fit_declining_yield(t_hist, primary_valid, phase_valid)
             phase_rates = declining_yield_rate(
@@ -145,9 +145,7 @@ def forecast_with_yields(
                 yield_params["decline_rate"],
             )
         elif yield_model_type == "hyperbolic":
-            # For hyperbolic, use declining as approximation
             yield_params = fit_declining_yield(t_hist, primary_valid, phase_valid)
-            # Approximate hyperbolic with declining for now
             phase_rates = declining_yield_rate(
                 t_forecast,
                 primary_rates,
@@ -156,11 +154,14 @@ def forecast_with_yields(
             )
             yield_params["model_type"] = "hyperbolic"
         else:
-            logger.warning(f"Unknown yield model type '{yield_model_type}', using constant")
+            logger.warning(
+                f"Unknown yield model type '{yield_model_type}', using constant"
+            )
             yield_params = fit_constant_yield(t_hist, primary_valid, phase_valid)
-            phase_rates = constant_yield_rate(primary_rates, yield_params["yield_ratio"])
+            phase_rates = constant_yield_rate(
+                primary_rates, yield_params["yield_ratio"]
+            )
 
-        # Create forecast result
         phase_forecast = pd.Series(phase_rates, index=time_index, name=phase)
         results[phase] = ForecastResult(
             yhat=phase_forecast,
@@ -173,4 +174,3 @@ def forecast_with_yields(
 
     logger.info(f"Completed multi-phase forecast: {list(results.keys())}")
     return results
-
