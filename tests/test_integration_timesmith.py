@@ -54,6 +54,7 @@ def test_validate_series_like_with_ressmith():
     assert "di" in params
 
 
+@pytest.mark.skipif(not HAS_TIMESMITH_TYPING, reason="timesmith.typing not available or missing dependencies")
 def test_integration_example_runs():
     """Test that the integration example can be imported and run."""
     # Import the example module
@@ -74,7 +75,7 @@ def test_integration_example_runs():
         timeout=30,
     )
 
-    # Allow example to run even if timesmith.typing not available (it has fallback)
+    # Example requires timesmith.typing to be available
     assert result.returncode == 0, f"Example failed: {result.stderr}"
 
 
