@@ -13,8 +13,9 @@ try:
     from timesmith.typing import SeriesLike
     from timesmith.typing.validators import assert_series_like
     HAS_TIMESMITH_TYPING = True
-except ImportError:
-    # Fallback if timesmith.typing not available yet
+except (ImportError, AttributeError):
+    # Fallback if timesmith.typing not available or has missing dependencies
+    # AttributeError can occur when timesmith imports fail due to missing optional deps (e.g., networkx)
     HAS_TIMESMITH_TYPING = False
     print("Warning: timesmith.typing not available, using basic validation")
 
