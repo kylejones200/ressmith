@@ -52,6 +52,7 @@ def test_validate_series_like_with_ressmith():
     assert "di" in params
 
 
+@pytest.mark.skipif(not HAS_TIMESMITH, reason="timesmith not available or missing dependencies")
 def test_integration_example_runs():
     """Test that the integration example can be imported and run."""
     # Import the example module
@@ -76,6 +77,7 @@ def test_integration_example_runs():
     assert result.returncode == 0, f"Example failed: {result.stderr}"
 
 
+@pytest.mark.skipif(not HAS_TIMESMITH, reason="timesmith not available or missing dependencies")
 def test_no_circular_imports():
     """Test that there are no circular imports between ressmith and timesmith."""
     # Import ressmith
