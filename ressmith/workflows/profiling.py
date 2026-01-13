@@ -33,14 +33,14 @@ try:
     LINE_PROFILER_AVAILABLE = True
 except ImportError:
     LINE_PROFILER_AVAILABLE = False
-    LineProfiler = None
+    LineProfiler = None  # type: ignore[assignment, misc]
 
 
 # Global profiler instance
 _profiler = None
 
 
-def get_profiler() -> LineProfiler | None:
+def get_profiler() -> "LineProfiler | None":
     """Get or create the global profiler instance."""
     global _profiler
     if LINE_PROFILER_AVAILABLE and _profiler is None:
