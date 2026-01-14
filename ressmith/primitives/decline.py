@@ -71,7 +71,16 @@ def arps_hyperbolic(
     np.ndarray
         Rate values
     """
-    return qi / (1.0 + b * di * (t - t0)) ** (1.0 / b)
+    if b <= 0:
+        raise ValueError("b-factor must be between 0 and 1")
+    if b >= 1:
+        raise ValueError("b-factor must be between 0 and 1")
+    
+    dt = t - t0
+    if abs(b) < 1e-6:
+        return arps_exponential(t, qi, di, t0)
+    
+    return qi / (1.0 + b * di * dt) ** (1.0 / b)
 
 
 def arps_harmonic(t: np.ndarray, qi: float, di: float, t0: float = 0.0) -> np.ndarray:
@@ -111,13 +120,17 @@ def cumulative_hyperbolic(
     t: np.ndarray, qi: float, di: float, b: float, t0: float = 0.0
 ) -> np.ndarray:
     """Compute cumulative production for hyperbolic decline."""
+    if b <= 0:
+        raise ValueError("b-factor must be between 0 and 1")
+    if b >= 1:
+        raise ValueError("b-factor must be between 0 and 1")
+    
     dt = t - t0
-    # Handle b ≈ 1 case (harmonic) to avoid numerical instability
+    if abs(b) < 1e-6:
+        return cumulative_exponential(t, qi, di, t0)
     if abs(b - 1.0) < 1e-6:
-        # Harmonic case (b = 1)
         return (qi / di) * np.log(1.0 + di * dt)
     else:
-        # General hyperbolic
         return (qi / (di * (1 - b))) * (1.0 - (1.0 + b * di * dt) ** ((b - 1.0) / b))
 
 

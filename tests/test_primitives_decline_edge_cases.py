@@ -63,19 +63,16 @@ class TestHyperbolicBApproachingZero:
         np.testing.assert_allclose(cum_hyp, cum_exp, rtol=0.10, atol=10.0)
 
     def test_b_zero_not_allowed(self):
-        """b = 0 should not cause errors but may have numerical issues."""
+        """b = 0 should raise ValueError."""
         t = np.linspace(0, 10, 100)
         qi = 100.0
         di = 0.1
         b = 0.0
 
-        # This might raise an error or return unexpected values
-        # The function doesn't explicitly check for b=0
-        q = arps_hyperbolic(t, qi, di, b)
-
-        # Should still produce valid output (might be all NaN or inf)
-        # At minimum, should not crash
-        assert len(q) == len(t)
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            arps_hyperbolic(t, qi, di, b)
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            cumulative_hyperbolic(t, qi, di, b)
 
     def test_b_negative_not_allowed(self):
         """Negative b values should be handled gracefully."""
