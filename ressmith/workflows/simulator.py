@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 def export_for_simulator(
     production_data: pd.DataFrame,
-    pressure_data: pd.DataFrame | None = None,
     output_path: str | Path,
+    pressure_data: pd.DataFrame | None = None,
     format: str = "csv",
     well_id: str | None = None,
     **kwargs: Any,
