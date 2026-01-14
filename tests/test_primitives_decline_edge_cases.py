@@ -75,21 +75,16 @@ class TestHyperbolicBApproachingZero:
             cumulative_hyperbolic(t, qi, di, b)
 
     def test_b_negative_not_allowed(self):
-        """Negative b values should be handled gracefully."""
+        """Negative b values should raise ValueError."""
         t = np.linspace(0, 10, 100)
         qi = 100.0
         di = 0.1
         b = -0.1
 
-        # Should handle gracefully (might produce negative rates or errors)
-        # At minimum, should not crash the system
-        try:
-            q = arps_hyperbolic(t, qi, di, b)
-            # If it doesn't crash, check that it's finite
-            assert np.all(np.isfinite(q)) or np.any(~np.isfinite(q))
-        except (ValueError, ZeroDivisionError):
-            # Error is acceptable for invalid input
-            pass
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            arps_hyperbolic(t, qi, di, b)
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            cumulative_hyperbolic(t, qi, di, b)
 
 
 class TestHyperbolicBApproachingOne:
