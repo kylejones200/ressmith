@@ -73,12 +73,14 @@ def arps_hyperbolic(
     """
     if b <= 0:
         raise ValueError("b-factor must be between 0 and 1")
-    if b >= 1:
+    if b > 1:
         raise ValueError("b-factor must be between 0 and 1")
     
     dt = t - t0
     if abs(b) < 1e-6:
         return arps_exponential(t, qi, di, t0)
+    if abs(b - 1.0) < 1e-6:
+        return arps_harmonic(t, qi, di, t0)
     
     return qi / (1.0 + b * di * dt) ** (1.0 / b)
 
@@ -122,7 +124,7 @@ def cumulative_hyperbolic(
     """Compute cumulative production for hyperbolic decline."""
     if b <= 0:
         raise ValueError("b-factor must be between 0 and 1")
-    if b >= 1:
+    if b > 1:
         raise ValueError("b-factor must be between 0 and 1")
     
     dt = t - t0

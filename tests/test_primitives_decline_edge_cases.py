@@ -117,11 +117,15 @@ class TestHyperbolicBApproachingOne:
         cum_har = cumulative_harmonic(t, qi, di)
 
         # Test values very close to 1.0 (within tolerance)
-        b_values = [1.0 - 1e-7, 1.0, 1.0 + 1e-7]
+        b_values = [1.0 - 1e-7, 1.0]
         for b in b_values:
             # Should use harmonic formula due to tolerance check
             cum_hyp = cumulative_hyperbolic(t, qi, di, b)
             np.testing.assert_allclose(cum_hyp, cum_har, rtol=1e-5, atol=0.1)
+        
+        # b > 1 should raise error
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            cumulative_hyperbolic(t, qi, di, 1.0 + 1e-7)
 
     def test_b_approaches_one_cumulative_approaches_harmonic(self):
         """Cumulative for hyperbolic with b → 1 should approach harmonic."""
