@@ -139,21 +139,17 @@ class TestHyperbolicBApproachingOne:
         # Should be close (within 5% for b near 1)
         np.testing.assert_allclose(cum_hyp, cum_har, rtol=0.05, atol=10.0)
 
-    def test_b_greater_than_one(self):
-        """b > 1 should be handled (though not typical)."""
+    def test_b_greater_than_one_raises_error(self):
+        """b > 1 should raise ValueError."""
         t = np.linspace(0, 10, 100)
         qi = 100.0
         di = 0.1
         b = 1.5
 
-        # Should handle gracefully
-        try:
-            q = arps_hyperbolic(t, qi, di, b)
-            # At minimum, should not crash
-            assert len(q) == len(t)
-        except (ValueError, ZeroDivisionError):
-            # Error is acceptable for unusual input
-            pass
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            arps_hyperbolic(t, qi, di, b)
+        with pytest.raises(ValueError, match="b-factor must be between 0 and 1"):
+            cumulative_hyperbolic(t, qi, di, b)
 
 
 class TestSmallDeclineRate:
