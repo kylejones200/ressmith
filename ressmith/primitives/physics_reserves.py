@@ -102,9 +102,8 @@ def classify_reserves_from_material_balance(
         )
 
         # Calculate cumulative production until economic limit
-        # Simplified: use exponential decline
         D = pressure_decline_rate
-        qi = N * D * 0.1  # Rough estimate
+        qi = N * D * 0.1
 
         # Time to economic limit
         if qi > economic_limit and D > 0:
@@ -120,7 +119,7 @@ def classify_reserves_from_material_balance(
 
     # Calculate P1/P2/P3
     p1_reserves = np.percentile(reserves_samples, 90)  # P90 (conservative)
-    p2_reserves = np.percentile(reserves_samples, 50)  # P50 (best estimate)
+    p2_reserves = np.percentile(reserves_samples, 50)
     p3_reserves = np.percentile(reserves_samples, 10)  # P10 (optimistic)
 
     return ReservesClassification(
@@ -155,7 +154,7 @@ def identify_decline_type_from_physics(
     """
     # Analyze production trend
     if len(production_data) < 3:
-        return "hyperbolic"  # Default
+        return "hyperbolic"
 
     production_values = production_data.values
     time_values = np.arange(len(production_values))
@@ -205,10 +204,10 @@ def identify_decline_type_from_physics(
             pressure_values
         )
 
-        if pressure_decline > 100:  # Rapid pressure decline
-            return "hyperbolic"  # Typical for solution gas drive
-        elif pressure_decline < 10:  # Slow pressure decline
-            return "harmonic"  # Typical for water drive
+        if pressure_decline > 100:
+            return "hyperbolic"
+        elif pressure_decline < 10:
+            return "harmonic"
 
-    # Default to hyperbolic (most common for unconventional)
+    return "hyperbolic"
     return "hyperbolic"

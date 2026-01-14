@@ -122,7 +122,6 @@ class MaterialBalanceDecline(BaseDeclineModel):
         _Swi = params.get("Swi", 0.2)
         pi = params.get("pi", 5000.0)
 
-        # Pressure decline (simplified - can be enhanced)
         D = params.get("D", 0.001)  # Pressure decline rate
         p = pi * np.exp(-D * t)
 
@@ -187,7 +186,6 @@ class MaterialBalanceDecline(BaseDeclineModel):
                     temperature=params.get("temperature", 200.0),
                 )
                 _ = solution_gas_drive_material_balance(p_i, Np_i, mb_params)  # noqa: F841
-                # Estimate rate from material balance
                 if i > 0:
                     dNp = Np_i - Np[i - 1]
                     dt = t_i - t[i - 1] if t_i > t[i - 1] else 1.0
@@ -232,7 +230,7 @@ class MaterialBalanceDecline(BaseDeclineModel):
             elif drive_mechanism == "gas_reservoir":
                 # For gas reservoirs, use p/Z method
                 G = params.get("G", N * 1000.0)  # Convert to SCF
-                Gp = params.get("Gp", Np_i * 1000.0)  # Approximate
+                    Gp = params.get("Gp", Np_i * 1000.0)
                 mb_params = GasReservoirParams(
                     G=G,
                     pi=pi,
@@ -240,7 +238,6 @@ class MaterialBalanceDecline(BaseDeclineModel):
                     gas_gravity=params.get("gas_gravity", 0.65),
                 )
                 _ = gas_reservoir_pz_method(p_i, Gp, mb_params)  # noqa: F841
-                # Estimate gas rate
                 if i > 0:
                     dGp = Gp - params.get("Gp_prev", 0.0)
                     dt = t_i - t[i - 1] if t_i > t[i - 1] else 1.0
@@ -267,7 +264,6 @@ class MaterialBalanceDecline(BaseDeclineModel):
                 else:
                     rates[i] = params.get("qi", N * D * 0.1)
             else:
-                # Default: simple exponential decline
                 qi = params.get("qi", N * D * 0.1)
                 di = D
                 rates[i] = qi * np.exp(-di * t_i)
@@ -288,7 +284,6 @@ class MaterialBalanceDecline(BaseDeclineModel):
         D = params.get("D", 0.001)
 
         # Cumulative from material balance
-        # Simplified: Np = N * (1 - exp(-D * t))
         return N * (1 - np.exp(-D * t))
 
     def constraints(self) -> dict[str, tuple[float, float]]:
@@ -324,16 +319,12 @@ class MaterialBalanceDecline(BaseDeclineModel):
         q_valid = q[valid_mask]
         qi = float(np.max(q_valid))
 
-        # Estimate N from cumulative
         if len(q_valid) > 1:
             t_valid = t[valid_mask]
             Np_approx = np.trapz(q_valid, t_valid)
-            # Rough estimate: N ≈ 2 * Np_approx (assuming 50% recovery)
             N = max(1e6, 2 * Np_approx)
         else:
             N = 1e6
-
-        # Estimate D from decline
         if len(q_valid) >= 2:
             decline_rate = (q_valid[0] - q_valid[-1]) / (q_valid[0] * t[valid_mask][-1])
             D = max(1e-6, min(0.1, decline_rate))
@@ -426,7 +417,6 @@ class PressureDeclineModel(BaseDeclineModel):
                 q[i] = fetkovich_ipr(p_current, pwf, q_max, n=n)
 
             else:
-                # Default to linear
                 q[i] = linear_ipr(p_current, pwf, J)
 
         return q
@@ -464,10 +454,8 @@ class PressureDeclineModel(BaseDeclineModel):
         q_valid = q[valid_mask]
         qi = float(np.max(q_valid))
 
-        # Estimate J assuming pi - pwf ≈ 4000 psi
         J = qi / 4000.0
 
-        # Estimate D from decline
         if len(q_valid) >= 2:
             decline_rate = (q_valid[0] - q_valid[-1]) / (q_valid[0] * t[valid_mask][-1])
             D = max(1e-6, min(0.1, decline_rate))
@@ -599,7 +587,6 @@ def load_reservoir_simulation(
         }
         df = df.rename(columns={k: v for k, v in column_map.items() if k in df.columns})
 
-        # Set date as index if available
         if "date" in df.columns:
             df = df.set_index("date")
 
@@ -728,7 +715,6 @@ def material_balance_forecast(
             material_balance_params, "drive_mechanism", "solution_gas"
         )
 
-    # Create fit spec (only numeric parameters - remove any remaining strings)
     numeric_params = {
         k: v
         for k, v in initial_params.items()
@@ -752,7 +738,6 @@ def material_balance_forecast(
 
     if not fit_result.success:
         logger.warning(f"Material balance fitting failed: {fit_result.message}")
-        # Fall back to simple exponential decline
 
         try:
             from ressmith.primitives.decline import fit_arps_exponential
@@ -836,7 +821,6 @@ def pressure_decline_forecast(
             pwf_est = pi * 0.9  # Assume 10% pressure drop
             initial_params["J"] = qi / (pi - pwf_est) if (pi - pwf_est) > 0 else 1.0
 
-    # Fit pressure decline (simplified - fit exponential to pressure)
     from scipy.optimize import curve_fit
 
     def pressure_model(t, pi, D):

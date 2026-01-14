@@ -127,7 +127,6 @@ def vogel_ipr(
     if flowing_pressure >= reservoir_pressure:
         return 0.0
 
-    # If no bubble point specified, assume fully saturated
     if bubble_point_pressure is None:
         bubble_point_pressure = reservoir_pressure
 
@@ -353,9 +352,7 @@ def joshi_horizontal_ipr(
     beta = np.sqrt(anisotropy)
     _ = horizontal_length / 2.0  # noqa: F841
 
-    # Drainage radius (assume square drainage area)
-    # For horizontal well: re ≈ sqrt(A/π) where A = L * 2 * re_vertical
-    re_vertical = 745.0  # Typical vertical drainage radius (ft)
+    re_vertical = 745.0
     re_horizontal = np.sqrt(horizontal_length * 2 * re_vertical / np.pi)
 
     # Joshi geometric factor
@@ -465,8 +462,7 @@ def cinco_ley_fractured_ipr(
         # Low conductivity
         rw_eff = wellbore_radius
 
-    # Drainage radius (assume circular)
-    re = 745.0  # Typical drainage radius (ft)
+    re = 745.0
 
     # Productivity index
     # J = (2π * k * h) / (μ * Bo) * (1 / (ln(re/rw_eff) + S))

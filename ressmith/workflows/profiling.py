@@ -204,7 +204,7 @@ def reset_profiler():
 
 
 # Example profiling configuration
-PROFILING_ENABLED = False  # Set to True to enable profiling by default
+PROFILING_ENABLED = False
 
 
 def conditional_profile(func: Callable) -> Callable:

@@ -86,28 +86,24 @@ def identify_flow_regime(
     # Linear flow: q vs sqrt(t) should be linear
     # Boundary dominated: q vs t should show exponential decline
 
-    # Check for linear flow (early time, fracture dominated)
     # Linear flow: q proportional to 1/sqrt(t)
     if len(time_valid) >= 3:
         early_indices = np.arange(min(5, len(time_valid)))
         sqrt_t_early = np.sqrt(time_valid[early_indices])
         q_early = rate_valid[early_indices]
 
-        # Check if q vs sqrt(t) is approximately linear
         if len(q_early) >= 3:
             # Calculate correlation
             correlation = np.corrcoef(sqrt_t_early, q_early)[0, 1]
             if correlation < -0.7:  # Strong negative correlation
                 return "linear"
 
-    # Check for boundary dominated flow (late time)
     # BDF: exponential decline, q vs t shows constant decline rate
     if len(time_valid) >= 5:
         late_indices = np.arange(max(0, len(time_valid) - 5), len(time_valid))
         t_late = time_valid[late_indices]
         q_late = rate_valid[late_indices]
 
-        # Check for exponential decline
         log_q_late = np.log(q_late[q_late > 0])
         if len(log_q_late) >= 3:
             # Fit exponential: log(q) = a + b*t
@@ -116,7 +112,6 @@ def identify_flow_regime(
             if abs(coeffs[0]) < 0.01 and coeffs[0] < 0:  # Negative slope
                 return "boundary_dominated"
 
-    # Check for bilinear flow (intermediate)
     # Bilinear: q proportional to t^(-1/4)
     if len(time_valid) >= 4:
         mid_indices = np.arange(2, min(6, len(time_valid)))
@@ -177,7 +172,6 @@ def estimate_permeability_from_production(
     if flow_regime is None:
         flow_regime = identify_flow_regime(time, rate)
 
-    # Filter valid data
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
         return 0.0
@@ -235,9 +229,8 @@ def estimate_permeability_from_production(
             )
             decline_rate = max(0.0001, min(1.0, decline_rate))
 
-            # Simplified: k ≈ (141.2 * q * μ * Bo) / (h * Δp * ln(re/rw))
-            dp = initial_pressure * 0.2  # Assume 20% pressure drop
-            re = 745.0  # Typical drainage radius
+            dp = initial_pressure * 0.2
+            re = 745.0
             k = (
                 141.2
                 * rate_valid[0]
@@ -257,7 +250,7 @@ def estimate_permeability_from_production(
 
             if len(log_q) >= 2:
                 slope = np.polyfit(log_t, log_q, 1)[0]
-                dp = initial_pressure * 0.2  # Assume 20% pressure drop
+                dp = initial_pressure * 0.2
 
                 if slope < 0 and dp > 0:
                     # Estimate from early time data
@@ -306,7 +299,6 @@ def estimate_fracture_half_length(
     Reference:
         Wattenbarger, R.A., et al., "Gas Reservoir Engineering," SPE Textbook Series, 1998.
     """
-    # Filter valid data
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
         return 0.0
@@ -460,9 +452,7 @@ def analyze_production_data(
         )
 
         if fracture_half_length > 0:
-            # Estimate number of fractures from production behavior
-            # Simplified: assume 1 fracture per 200 ft for horizontal wells
-            well_length_estimate = len(time) * 10.0  # Rough estimate
+            well_length_estimate = len(time) * 10.0
             n_fractures = max(1, int(well_length_estimate / 200.0))
             srv = calculate_srv(
                 fracture_half_length=fracture_half_length,

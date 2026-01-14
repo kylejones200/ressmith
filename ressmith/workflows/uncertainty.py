@@ -87,35 +87,13 @@ def probabilistic_forecast(
         data, model_name=model_name, horizon=horizon, **kwargs
     )
 
-    from ressmith.primitives.models import (
-        ArpsExponentialModel,
-        ArpsHarmonicModel,
-        ArpsHyperbolicModel,
-        DuongModel,
-        FixedTerminalDeclineModel,
-        HyperbolicToExponentialSwitchModel,
-        LinearDeclineModel,
-        PowerLawDeclineModel,
-        StretchedExponentialModel,
-    )
+    from ressmith.primitives.models import MODEL_REGISTRY
     from ressmith.tasks.core import FitDeclineTask
 
-    model_map = {
-        "arps_exponential": ArpsExponentialModel,
-        "arps_hyperbolic": ArpsHyperbolicModel,
-        "arps_harmonic": ArpsHarmonicModel,
-        "linear_decline": LinearDeclineModel,
-        "hyperbolic_to_exponential": HyperbolicToExponentialSwitchModel,
-        "power_law": PowerLawDeclineModel,
-        "duong": DuongModel,
-        "stretched_exponential": StretchedExponentialModel,
-        "fixed_terminal_decline": FixedTerminalDeclineModel,
-    }
-
-    if model_name not in model_map:
+    if model_name not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model: {model_name}")
 
-    model = model_map[model_name](**kwargs)
+    model = MODEL_REGISTRY[model_name](**kwargs)
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
     fitted_model, _ = task.run(data, horizon=None)
 

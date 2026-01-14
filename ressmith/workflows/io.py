@@ -1,5 +1,8 @@
 """
 I/O helpers for workflows.
+
+This module provides functions for reading/writing production data files.
+For loading multiple files, see workflows.data_utils.load_production_csvs.
 """
 
 import logging
@@ -17,7 +20,7 @@ def read_csv_production(
     rate_columns: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """
-    Read production data from CSV.
+    Read a single production data CSV file.
 
     Parameters
     ----------
@@ -26,12 +29,16 @@ def read_csv_production(
     time_column : str
         Name of time column (default: 'date')
     rate_columns : dict, optional
-        Mapping of phase names to column names
+        Mapping of phase names to column names (not currently used, reserved for future)
 
     Returns
     -------
     pd.DataFrame
         Production data with datetime index
+
+    See Also
+    --------
+    load_production_csvs : Load multiple CSV files and stack them
     """
     logger.info(f"Reading production data from {filepath}")
     df = pd.read_csv(filepath)

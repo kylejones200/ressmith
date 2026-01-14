@@ -90,11 +90,9 @@ def history_match_material_balance(
     if pressure is not None and len(pressure) != len(time):
         raise ValueError("pressure must have same length as time")
 
-    # Default weights
     if weights is None:
         weights = {"production": 1.0, "pressure": 1.0 if pressure is not None else 0.0}
 
-    # Default parameter bounds
     if param_bounds is None:
         param_bounds = {
             "N": (1e5, 1e7),  # OOIP
@@ -102,10 +100,9 @@ def history_match_material_balance(
             "D": (1e-6, 0.1),  # Decline rate
         }
 
-    # Default initial parameters
     if initial_params is None:
         initial_params = {
-            "N": np.max(production) * 10,  # Rough estimate
+            "N": np.max(production) * 10,
             "pi": pressure[0] if pressure is not None else 5000.0,
             "D": 0.001,
         }
@@ -143,7 +140,6 @@ def history_match_material_balance(
                     calculated_production[i] = result["Np_calculated"]
 
             elif drive_mechanism == "gas_reservoir":
-                # For gas, use p/Z method
                 calculated_production = np.zeros_like(time)
                 G = params_dict.get("G", 1e9)
                 for i, p_i in enumerate(
@@ -151,18 +147,14 @@ def history_match_material_balance(
                     if pressure is not None
                     else [params_dict.get("pi", 5000.0)] * len(time)
                 ):
-                    # Simplified: estimate cumulative from pressure
                     result = gas_reservoir_pz_method(
                         p_i,
                         calculated_production[i - 1] if i > 0 else 0.0,
                         GasReservoirParams(G=G, pi=params_dict.get("pi", 5000.0)),
                     )
-                    calculated_production[i] = (
-                        result["G_calculated"] * 0.1
-                    )  # Approximate
+                    calculated_production[i] = result["G_calculated"] * 0.1
 
             else:
-                # Default: simple exponential
                 N = params_dict.get("N", 1e6)
                 D = params_dict.get("D", 0.001)
                 calculated_production = N * (1 - np.exp(-D * time))
@@ -170,10 +162,8 @@ def history_match_material_balance(
             # Calculate errors
             production_error = np.sum((calculated_production - production) ** 2)
 
-            # Pressure error (if available)
             pressure_error = 0.0
             if pressure is not None:
-                # Estimate pressure from production (simplified)
                 estimated_pressure = params_dict.get("pi", 5000.0) * np.exp(
                     -params_dict.get("D", 0.001) * time
                 )
@@ -189,7 +179,7 @@ def history_match_material_balance(
 
         except Exception as e:
             logger.warning(f"Error in objective function: {e}")
-            return 1e10  # Large penalty for invalid parameters
+            return 1e10
 
     # Prepare bounds for optimization
     bounds = [param_bounds[name] for name in param_bounds.keys()]
@@ -220,8 +210,6 @@ def history_match_material_balance(
     # Convert result back to parameter dict
     optimized_params = dict(zip(param_bounds.keys(), result.x))
 
-    # Calculate match statistics
-    # Recalculate with optimized parameters
     if drive_mechanism == "solution_gas":
         mb_params = SolutionGasDriveParams(
             N=optimized_params.get("N", 1e6),

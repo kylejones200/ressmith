@@ -11,7 +11,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-# Note: timesmith.typing is available for type hints if needed
 # from timesmith.typing import SeriesLike, PanelLike
 
 

@@ -240,7 +240,6 @@ class DatasetCatalog:
             if join:
                 df = df.merge(df_source, on=join.on, how=join.how)
             else:
-                # Default: merge on common columns
                 common_cols = set(df.columns) & set(df_source.columns)
                 if common_cols:
                     df = df.merge(df_source, on=list(common_cols), how="left")

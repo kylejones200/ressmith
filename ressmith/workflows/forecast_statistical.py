@@ -48,7 +48,6 @@ def simple_exponential_smoothing(
                 alpha * forecast_values[-1] + (1 - alpha) * forecast_values[-1]
             )
 
-    # Create index for forecast
     if isinstance(series.index, pd.DatetimeIndex):
         freq = series.index.freq or pd.infer_freq(series.index) or "MS"
         forecast_index = pd.date_range(
@@ -84,7 +83,6 @@ def moving_average_forecast(
 
     forecast_values = [ma] * horizon
 
-    # Create index for forecast
     if isinstance(series.index, pd.DatetimeIndex):
         freq = series.index.freq or pd.infer_freq(series.index) or "MS"
         forecast_index = pd.date_range(
@@ -114,10 +112,8 @@ def linear_trend_forecast(series: pd.Series, horizon: int = 6) -> pd.Series:
     future_x = np.arange(len(series), len(series) + horizon)
     forecast_values = np.polyval(coeffs, future_x)
 
-    # Ensure non-negative
     forecast_values = np.maximum(forecast_values, 0)
 
-    # Create index for forecast
     if isinstance(series.index, pd.DatetimeIndex):
         freq = series.index.freq or pd.infer_freq(series.index) or "MS"
         forecast_index = pd.date_range(
@@ -156,7 +152,7 @@ def holt_winters_forecast(
         # Auto-detect seasonality if not provided
         if seasonal_periods is None:
             if len(series) >= 24:
-                seasonal_periods = 12  # Assume monthly seasonality
+                seasonal_periods = 12
             else:
                 seasonal_periods = None
 
@@ -169,7 +165,6 @@ def holt_winters_forecast(
 
         forecast_values = model.forecast(horizon).values
 
-        # Create index for forecast
         if isinstance(series.index, pd.DatetimeIndex):
             freq = series.index.freq or pd.infer_freq(series.index) or "MS"
             forecast_index = pd.date_range(
@@ -217,7 +212,6 @@ def calculate_confidence_intervals(
         return None, None
 
     if method == "naive":
-        # Use recent historical standard deviation
         recent_std = series.iloc[-12:].std() if len(series) >= 12 else series.std()
         if pd.isna(recent_std) or recent_std == 0:
             recent_std = series.std()
@@ -227,8 +221,6 @@ def calculate_confidence_intervals(
         lower = forecast - margin
 
     elif method == "residual_based":
-        # Use historical residuals if available
-        # For now, fall back to naive
         recent_std = series.iloc[-12:].std() if len(series) >= 12 else series.std()
         margin = z_score * recent_std
         upper = forecast + margin
@@ -238,7 +230,6 @@ def calculate_confidence_intervals(
         logger.warning(f"Unknown confidence interval method: {method}")
         return None, None
 
-    # Ensure non-negative
     lower = lower.clip(lower=0)
 
     return lower, upper

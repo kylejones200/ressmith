@@ -31,6 +31,7 @@ from ressmith.primitives.constraints import (
     validate_parameters,
 )
 from ressmith.primitives.data_utils import extract_rate_data
+from ressmith.utils.errors import ERR_MODEL_NOT_FITTED
 from ressmith.primitives.decline import (
     arps_exponential,
     arps_harmonic,
@@ -123,6 +124,8 @@ class ArpsExponentialModel(BaseDeclineModel):
         }
 
 
+
+
 class ArpsHyperbolicModel(BaseDeclineModel):
     """Hyperbolic decline model (0 < b < 1)."""
 
@@ -193,6 +196,8 @@ class ArpsHyperbolicModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
+
+
 
 
 class ArpsHarmonicModel(BaseDeclineModel):
@@ -266,6 +271,8 @@ class ArpsHarmonicModel(BaseDeclineModel):
         }
 
 
+
+
 class LinearDeclineModel(BaseDeclineModel):
     """
     Simple linear decline model (empirical approach).
@@ -292,12 +299,10 @@ class LinearDeclineModel(BaseDeclineModel):
         t = (time_index - time_index[0]).days.values.astype(float)
 
         # Linear regression: q = q0 - m*t
-        # Use numpy polyfit for simplicity
         coeffs = np.polyfit(t, rate, deg=1)
         q0 = coeffs[1]  # Intercept
         m = -coeffs[0]  # Negative slope (decline)
 
-        # Ensure positive parameters
         q0 = max(q0, 0.1)
         m = max(m, 0.0)
 
@@ -322,7 +327,7 @@ class LinearDeclineModel(BaseDeclineModel):
         # Linear: q = q0 - m*t
         q0 = self._fitted_params["q0"]
         m = self._fitted_params["m"]
-        yhat = np.maximum(q0 - m * t_forecast, 0.0)  # Ensure non-negative
+        yhat = np.maximum(q0 - m * t_forecast, 0.0)
 
         yhat_series = pd.Series(yhat, index=forecast_index, name="forecast")
         model_spec = DeclineSpec(
@@ -480,7 +485,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
                     start=start, periods=n_periods, freq=spec.frequency
                 )
             else:
-                # Continue date index from previous segment
                 last_date = forecast_parts[-1].index[-1]
                 n_periods = len(q_segment)
                 segment_dates_idx = pd.date_range(
@@ -492,10 +496,8 @@ class SegmentedDeclineModel(BaseDeclineModel):
             forecast_part = pd.Series(q_segment, index=segment_dates_idx)
             forecast_parts.append(forecast_part)
 
-        # Concatenate all segments
         if forecast_parts:
             full_forecast = pd.concat(forecast_parts)
-            # Limit to requested horizon
             if len(full_forecast) > spec.horizon:
                 full_forecast = full_forecast.iloc[: spec.horizon]
         else:
@@ -534,6 +536,8 @@ class SegmentedDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
+
+
 
 
 class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
@@ -635,6 +639,8 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
         }
 
 
+
+
 class PowerLawDeclineModel(BaseDeclineModel):
     """Power law decline model."""
 
@@ -705,6 +711,8 @@ class PowerLawDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
+
+
 
 
 class DuongModel(BaseDeclineModel):
@@ -779,6 +787,8 @@ class DuongModel(BaseDeclineModel):
         }
 
 
+
+
 class StretchedExponentialModel(BaseDeclineModel):
     """Stretched exponential decline model."""
 
@@ -849,6 +859,8 @@ class StretchedExponentialModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
+
+
 
 
 class FixedTerminalDeclineModel(BaseDeclineModel):
@@ -955,3 +967,18 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
+
+
+
+
+MODEL_REGISTRY = {
+    "arps_exponential": ArpsExponentialModel,
+    "arps_hyperbolic": ArpsHyperbolicModel,
+    "arps_harmonic": ArpsHarmonicModel,
+    "linear_decline": LinearDeclineModel,
+    "hyperbolic_to_exponential": HyperbolicToExponentialSwitchModel,
+    "power_law": PowerLawDeclineModel,
+    "duong": DuongModel,
+    "stretched_exponential": StretchedExponentialModel,
+    "fixed_terminal_decline": FixedTerminalDeclineModel,
+}

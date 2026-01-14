@@ -6,8 +6,6 @@ Layer 2 primitives for calculating EUR from decline curves.
 
 import numpy as np
 
-# Note: EUR calculations use analytical formulas, not numerical integration
-
 
 def calculate_eur_exponential(
     qi: float,
@@ -97,7 +95,7 @@ def calculate_eur_hyperbolic(
     # Solve for t when q(t) = econ_limit
     if econ_limit > 0:
         t_econ = ((qi / econ_limit) ** b - 1) / (b * di)
-        t_econ = max(0, t_econ)  # Ensure non-negative
+        t_econ = max(0, t_econ)
     else:
         t_econ = t_max
 

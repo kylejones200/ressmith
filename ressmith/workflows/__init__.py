@@ -91,6 +91,46 @@ from ressmith.workflows.risk import calculate_risk_metrics, portfolio_risk_repor
 from ressmith.workflows.scenarios import evaluate_scenarios, scenario_summary
 from ressmith.workflows.sensitivity import run_sensitivity
 from ressmith.workflows.uncertainty import probabilistic_forecast
+from ressmith.workflows.interference import (
+    analyze_interference_matrix,
+    calculate_well_distances,
+    recommend_spacing,
+)
+from ressmith.workflows.coning import analyze_well_coning
+from ressmith.workflows.diagnostics_plots import (
+    calculate_flow_regime_slopes,
+    generate_diagnostic_plot_data,
+    identify_flow_regime_from_plots,
+    prepare_log_log_data,
+    prepare_sqrt_time_data,
+)
+from ressmith.workflows.type_curves import (
+    generate_type_curve_library,
+    match_type_curve_workflow,
+)
+from ressmith.workflows.eor import (
+    analyze_waterflood,
+    calculate_mobility_ratio_workflow,
+)
+from ressmith.workflows.simulator import (
+    compare_simulation_to_forecast,
+    export_for_simulator,
+    import_simulation_results,
+)
+from ressmith.workflows.multi_well import (
+    analyze_multi_well_interaction,
+    optimize_field_spacing,
+)
+from ressmith.workflows.production_ops import (
+    allocate_production,
+    apply_constraints_to_production,
+    optimize_production,
+)
+from ressmith.workflows.advanced_rta import (
+    analyze_blasingame,
+    analyze_fmb,
+    analyze_fracture_network,
+)
 
 __all__ = [
     "fit_forecast",
@@ -175,4 +215,37 @@ __all__ = [
     "validate_no_future_data",
     "validate_training_split",
     "comprehensive_leakage_check",
+    # Interference
+    "calculate_well_distances",
+    "analyze_interference_matrix",
+    "recommend_spacing",
+    # Coning
+    "analyze_well_coning",
+    # Diagnostic plots
+    "prepare_log_log_data",
+    "prepare_sqrt_time_data",
+    "calculate_flow_regime_slopes",
+    "identify_flow_regime_from_plots",
+    "generate_diagnostic_plot_data",
+    # Type Curves
+    "match_type_curve_workflow",
+    "generate_type_curve_library",
+    # EOR
+    "analyze_waterflood",
+    "calculate_mobility_ratio_workflow",
+    # Simulator Integration
+    "export_for_simulator",
+    "import_simulation_results",
+    "compare_simulation_to_forecast",
+    # Multi-Well Interaction
+    "analyze_multi_well_interaction",
+    "optimize_field_spacing",
+    # Production Operations
+    "allocate_production",
+    "optimize_production",
+    "apply_constraints_to_production",
+    # Advanced RTA
+    "analyze_blasingame",
+    "analyze_fmb",
+    "analyze_fracture_network",
 ]

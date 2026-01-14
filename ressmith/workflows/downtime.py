@@ -82,9 +82,7 @@ def reconstruct_rate_from_uptime(
         uptime = df_result[hours_on_column] / hours_in_period
         uptime_source = hours_on_column
     elif uptime_column in df_result.columns:
-        # Use uptime (assume fraction 0-1, or convert from hours if > 1)
         uptime = df_result[uptime_column].copy()
-        # If values > 1, assume they're hours and convert
         if uptime.max() > 1.0:
             hours_in_period = time_period_days * 24
             uptime = uptime / hours_in_period

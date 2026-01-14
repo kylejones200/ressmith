@@ -23,7 +23,6 @@ from ressmith.primitives.decline import (
 
 logger = logging.getLogger(__name__)
 
-# Define ForecastDraws and ParameterDistribution if not available
 try:
     from ressmith.workflows.uncertainty import ForecastDraws, ParameterDistribution
 except ImportError:
@@ -82,11 +81,9 @@ def fast_arps_resample(
     if seed is not None:
         np.random.seed(seed)
 
-    # Fit point estimate
     t = np.arange(len(series))
     q = series.values
 
-    # Fit based on kind
     if kind == "exponential":
         params = fit_arps_exponential(t, q)
         qi, di = params["qi"], params["di"]
@@ -107,7 +104,6 @@ def fast_arps_resample(
     rmse = np.sqrt(np.mean(residuals**2))
     _ = np.mean(np.abs(residuals))  # noqa: F841
 
-    # Estimate parameter uncertainty from residual error
     if method == "residual_based":
         # Scale uncertainty based on residual error
         # Higher residual error -> higher parameter uncertainty
@@ -119,15 +115,12 @@ def fast_arps_resample(
         b_std = b * relative_error * 0.3 if kind == "hyperbolic" else 0.0
 
     elif method == "fixed_scale":
-        # Fixed scale factors (faster, less accurate)
         qi_std = qi * 0.15  # 15% uncertainty
         di_std = di * 0.20  # 20% uncertainty
         b_std = b * 0.10 if kind == "hyperbolic" else 0.0  # 10% uncertainty
     else:
         raise ValueError(f"Unknown method: {method}")
 
-    # Sample parameters from approximate posteriors
-    # Use lognormal for qi and di (must be positive), normal for b
     qi_samples = np.random.lognormal(
         np.log(max(qi, 1e-6)), qi_std / qi, n_draws
     )
@@ -144,7 +137,6 @@ def fast_arps_resample(
     else:  # harmonic
         b_samples = np.ones(n_draws)
 
-    # Generate forecast for each parameter sample
     n_periods = len(series) + horizon
     draws = np.zeros((n_draws, n_periods))
 
@@ -161,10 +153,8 @@ def fast_arps_resample(
             draws[i] = forecast
         except Exception as e:
             logger.warning(f"Failed to generate forecast for sample {i}: {e}")
-            # Use point estimate as fallback
             draws[i] = q_pred
 
-    # Create date index
     dates = pd.date_range(
         series.index[0], periods=n_periods, freq=series.index.freq or "MS"
     )
@@ -211,12 +201,10 @@ def approximate_posterior(
     rmse = np.sqrt(np.mean(residuals**2))
     relative_error = rmse / np.mean(np.abs(residuals) + 1e-6)
 
-    # Estimate parameter uncertainty
     qi_std = qi * relative_error * 0.5
     di_std = di * relative_error * 0.5
     b_std = b * relative_error * 0.3 if kind == "hyperbolic" else 0.0
 
-    # Create distributions
     qi_dist = {
         "type": "lognormal",
         "mean": qi,

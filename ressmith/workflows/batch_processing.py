@@ -34,17 +34,6 @@ except ImportError:
         "Parallel batch processing will be unavailable."
     )
 
-try:
-    from joblib import Parallel, delayed
-
-    JOBLIB_AVAILABLE = True
-except ImportError:
-    JOBLIB_AVAILABLE = False
-    logger.warning(
-        "joblib not available. Install with: pip install joblib. "
-        "Parallel batch processing will be unavailable."
-    )
-
 
 @dataclass
 class BatchManifest:
@@ -108,7 +97,6 @@ def process_single_well(
                 df["date"] = pd.to_datetime(df["date"])
                 df = df.set_index("date")
 
-        # Fit and forecast
         forecast, params = fit_forecast(
             df, model_name=model_name, horizon=horizon, **kwargs
         )

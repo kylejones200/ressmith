@@ -68,7 +68,6 @@ class UnitSystem:
         # bbl_per_day = barrels per day
         # mcf_per_day = thousand cubic feet per day
 
-        # These are typically already defined in pint, but we ensure they exist
         try:
             _ = self.ureg.bbl
             _ = self.ureg.mcf
@@ -332,14 +331,8 @@ def convert_decline_rate(
     to_factor = time_factors.get(to_time_unit, 1.0)
 
     if nominal:
-        # Nominal decline: simple scaling
-        # Decline rate is "per unit time", so we divide by time factor
-        # (not multiply) - smaller time unit means smaller decline rate
         return di * (to_factor / from_factor)
     else:
-        # Effective decline: requires exponential conversion
-        # Effective decline: di_eff = 1 - exp(-di_nom * t)
-        # For conversion, we need to invert this
         # This is more complex and typically nominal is used
         logger.warning(
             "Effective decline conversion not fully implemented. "

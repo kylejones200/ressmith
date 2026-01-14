@@ -5,6 +5,7 @@ Algorithms and interfaces. No file I/O or plotting.
 Can import numpy, pandas, and ressmith.objects only.
 """
 
+# Base classes
 from ressmith.primitives.base import (
     BaseDeclineModel,
     BaseEconModel,
@@ -12,7 +13,7 @@ from ressmith.primitives.base import (
     BaseObject,
 )
 
-# Reservoir engineering primitives
+# IPR (Inflow Performance Relationship)
 from ressmith.primitives.ipr import (
     IPRResult,
     calculate_productivity_index,
@@ -24,6 +25,7 @@ from ressmith.primitives.ipr import (
     linear_ipr,
     vogel_ipr,
 )
+# Material Balance
 from ressmith.primitives.material_balance import (
     GasCapDriveParams,
     GasReservoirParams,
@@ -38,6 +40,7 @@ from ressmith.primitives.material_balance import (
     undersaturated_oil_material_balance,
     water_drive_material_balance,
 )
+# PVT (Pressure-Volume-Temperature) Properties
 from ressmith.primitives.pvt import (
     PVTProperties,
     beggs_robinson_oil_viscosity,
@@ -53,6 +56,7 @@ from ressmith.primitives.pvt import (
     water_fvf,
     water_viscosity,
 )
+# RTA (Rate Transient Analysis)
 from ressmith.primitives.rta import (
     RTAResult,
     analyze_production_data,
@@ -61,6 +65,73 @@ from ressmith.primitives.rta import (
     estimate_permeability_from_production,
     identify_flow_regime,
 )
+# Well Interference
+from ressmith.primitives.interference import (
+    InterferenceResult,
+    analyze_well_interference,
+    calculate_interference_factor,
+    calculate_well_distance,
+    estimate_drainage_radius,
+    estimate_production_interference,
+    optimize_well_spacing,
+)
+# Coning Analysis
+from ressmith.primitives.coning import (
+    ConingResult,
+    analyze_coning,
+    calculate_coning_index,
+    chierici_ciucci_critical_rate,
+    estimate_breakthrough_time,
+    meyer_gardner_critical_rate,
+)
+# Type Curves
+from ressmith.primitives.type_curves import (
+    TypeCurveMatch,
+    calculate_type_curve_statistics,
+    generate_arps_type_curve,
+    match_multiple_type_curves,
+    match_type_curve,
+    normalize_production_data,
+)
+# EOR (Enhanced Oil Recovery)
+from ressmith.primitives.eor import (
+    WaterfloodPatternResult,
+    analyze_waterflood_pattern,
+    calculate_areal_sweep_efficiency,
+    calculate_displacement_efficiency,
+    calculate_injection_efficiency,
+    calculate_mobility_ratio,
+    calculate_vertical_sweep_efficiency,
+)
+# Multi-Well Interaction
+from ressmith.primitives.multi_well import (
+    DrainageVolume,
+    MultiWellInteraction,
+    analyze_drainage_volumes,
+    calculate_drainage_overlap_matrix,
+    calculate_drainage_volume,
+    model_multi_well_interaction,
+    optimize_multi_well_spacing,
+)
+# Production Operations
+from ressmith.primitives.production_ops import (
+    AllocationResult,
+    FacilityConstraints,
+    allocate_production_optimal,
+    allocate_production_proportional,
+    apply_facility_constraints,
+    calculate_facility_utilization,
+    optimize_production_allocation,
+)
+# Advanced RTA
+from ressmith.primitives.advanced_rta import (
+    BlasingameResult,
+    FMBResult,
+    analyze_complex_fracture_network,
+    generate_blasingame_type_curve,
+    generate_fmb_type_curve,
+)
+# Unit Conversion
 from ressmith.primitives.units import (
     INTERNAL_RATE_UNIT,
     INTERNAL_TIME_UNIT,
@@ -69,6 +140,7 @@ from ressmith.primitives.units import (
     convert_decline_rate,
     validate_units,
 )
+# VLP (Vertical Lift Performance)
 from ressmith.primitives.vlp import (
     NodalAnalysisResult,
     VLPResult,
@@ -78,6 +150,7 @@ from ressmith.primitives.vlp import (
     optimize_artificial_lift,
     perform_nodal_analysis,
 )
+# Well Testing
 from ressmith.primitives.well_test import (
     WellTestResult,
     analyze_buildup_test,
@@ -149,6 +222,58 @@ __all__ = [
     "analyze_drawdown_test",
     "detect_boundaries",
     "calculate_productivity_index_from_test",
+    # Interference
+    "InterferenceResult",
+    "calculate_well_distance",
+    "estimate_drainage_radius",
+    "calculate_interference_factor",
+    "estimate_production_interference",
+    "analyze_well_interference",
+    "optimize_well_spacing",
+    # Coning
+    "ConingResult",
+    "meyer_gardner_critical_rate",
+    "chierici_ciucci_critical_rate",
+    "calculate_coning_index",
+    "estimate_breakthrough_time",
+    "analyze_coning",
+    # Type Curves
+    "TypeCurveMatch",
+    "generate_arps_type_curve",
+    "normalize_production_data",
+    "match_type_curve",
+    "match_multiple_type_curves",
+    "calculate_type_curve_statistics",
+    # EOR
+    "WaterfloodPatternResult",
+    "calculate_mobility_ratio",
+    "calculate_areal_sweep_efficiency",
+    "calculate_displacement_efficiency",
+    "calculate_vertical_sweep_efficiency",
+    "calculate_injection_efficiency",
+    "analyze_waterflood_pattern",
+    # Multi-Well
+    "DrainageVolume",
+    "MultiWellInteraction",
+    "calculate_drainage_volume",
+    "calculate_drainage_overlap_matrix",
+    "analyze_drainage_volumes",
+    "model_multi_well_interaction",
+    "optimize_multi_well_spacing",
+    # Production Operations
+    "AllocationResult",
+    "FacilityConstraints",
+    "allocate_production_proportional",
+    "allocate_production_optimal",
+    "optimize_production_allocation",
+    "calculate_facility_utilization",
+    "apply_facility_constraints",
+    # Advanced RTA
+    "BlasingameResult",
+    "FMBResult",
+    "generate_blasingame_type_curve",
+    "generate_fmb_type_curve",
+    "analyze_complex_fracture_network",
     # Units
     "UnitSystem",
     "UnitConverter",

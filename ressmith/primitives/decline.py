@@ -112,8 +112,9 @@ def cumulative_hyperbolic(
 ) -> np.ndarray:
     """Compute cumulative production for hyperbolic decline."""
     dt = t - t0
-    if b == 1.0:
-        # Harmonic case
+    # Handle b ≈ 1 case (harmonic) to avoid numerical instability
+    if abs(b - 1.0) < 1e-6:
+        # Harmonic case (b = 1)
         return (qi / di) * np.log(1.0 + di * dt)
     else:
         # General hyperbolic
@@ -179,7 +180,6 @@ def fit_arps_exponential(
         use_scipy = HAS_SCIPY
 
     if use_scipy and HAS_SCIPY:
-        # Use ramp-aware initial guess
         init_guess = initial_guess_exponential(t, q)
         qi_init = init_guess["qi"]
         di_init = init_guess["di"]
@@ -192,9 +192,6 @@ def fit_arps_exponential(
         )
         if result.success:
             return {"qi": result.x[0], "di": result.x[1]}
-        # Fall through to grid search
-
-    # Grid search fallback
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 50)
     di_range = np.linspace(1e-4, 0.5, 50)
     best_error = np.inf
@@ -248,9 +245,6 @@ def fit_arps_hyperbolic(
         )
         if result.success:
             return {"qi": result.x[0], "di": result.x[1], "b": result.x[2]}
-        # Fall through to grid search
-
-    # Grid search fallback
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 30)
     di_range = np.linspace(1e-4, 0.5, 30)
     b_range = np.linspace(0.1, 0.9, 20)
@@ -305,9 +299,6 @@ def fit_arps_harmonic(
         )
         if result.success:
             return {"qi": result.x[0], "di": result.x[1]}
-        # Fall through to grid search
-
-    # Grid search fallback
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 50)
     di_range = np.linspace(1e-4, 0.5, 50)
     best_error = np.inf

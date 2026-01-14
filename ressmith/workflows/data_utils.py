@@ -1,4 +1,8 @@
-"""Data loading and processing utilities for production data."""
+"""Data loading and processing utilities for production data.
+
+This module provides functions for loading and processing multiple production data files.
+For reading a single CSV file, see workflows.io.read_csv_production.
+"""
 
 import logging
 
@@ -13,16 +17,20 @@ def load_production_csvs(
     well_id_col: str = "well_id",
     oil_col: str = "oil_bbl",
 ) -> pd.DataFrame:
-    """Load and stack well-level production CSV files.
+    """Load and stack multiple well-level production CSV files.
 
     Args:
-        paths: List of CSV paths.
-        date_col: Name of the date column.
-        well_id_col: Name of the well id column.
-        oil_col: Name of the oil volume column.
+        paths: List of CSV file paths to load
+        date_col: Name of the date column
+        well_id_col: Name of the well id column
+        oil_col: Name of the oil volume column
 
     Returns:
-        A DataFrame with [date, well_id, oil_bbl] and a DateTimeIndex.
+        DataFrame with [date, well_id, oil_bbl] and a DateTimeIndex
+
+    See Also
+    --------
+    read_csv_production : Read a single CSV file
     """
     frames = []
     for p in paths:

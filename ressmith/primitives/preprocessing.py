@@ -58,9 +58,7 @@ def compute_cum_from_rate(time_index: pd.DatetimeIndex, rate: np.ndarray) -> np.
     if len(time_index) != len(rate):
         raise ValueError("time_index and rate must have same length")
 
-    # Convert to numeric days
     days = (time_index - time_index[0]).days.values.astype(float)
-    # Trapezoidal integration
     dt = np.diff(days)
     cum = np.zeros_like(rate, dtype=float)
     cum[1:] = np.cumsum(0.5 * (rate[:-1] + rate[1:]) * dt)
@@ -88,9 +86,7 @@ def compute_rate_from_cum(
     if len(time_index) != len(cumulative):
         raise ValueError("time_index and cumulative must have same length")
 
-    # Convert to numeric days
     days = (time_index - time_index[0]).days.values.astype(float)
-    # Finite difference
     dcum = np.diff(cumulative)
     dt = np.diff(days)
     rate = np.zeros_like(cumulative, dtype=float)
@@ -100,7 +96,7 @@ def compute_rate_from_cum(
 
 
 def smooth_rate(
-    rate: np.ndarray, window: int = 3, method: str = "median"
+    rate: np.ndarray, window: int = 3, method: str = "median", center: bool = False
 ) -> np.ndarray:
     """
     Smooth rate series.
@@ -113,6 +109,9 @@ def smooth_rate(
         Rolling window size (default: 3)
     method : str
         Smoothing method: 'median' or 'mean' (default: 'median')
+    center : bool
+        Whether to center the window (default: False).
+        WARNING: center=True uses future data and should NOT be used for forecasting.
 
     Returns
     -------
@@ -120,8 +119,8 @@ def smooth_rate(
         Smoothed rate values
     """
     if method == "median":
-        return pd.Series(rate).rolling(window=window, center=True).median().values
+        return pd.Series(rate).rolling(window=window, center=center).median().values
     elif method == "mean":
-        return pd.Series(rate).rolling(window=window, center=True).mean().values
+        return pd.Series(rate).rolling(window=window, center=center).mean().values
     else:
         raise ValueError(f"Unknown method: {method}")

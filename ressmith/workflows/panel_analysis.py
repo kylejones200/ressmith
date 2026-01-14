@@ -131,9 +131,6 @@ def calculate_spatial_features(
         )
 
         # Calculate well density (neighbors within 5 km) - vectorized
-        # Note: Uses all wells in dataset - appropriate for panel regression,
-        # not for time-series forecasting where this would cause leakage
-        # Approximate: 1 degree ≈ 111 km
         distance_threshold = (5 / 111) ** 2
 
         # Vectorized calculation using broadcasting
@@ -191,11 +188,9 @@ def eur_with_company_controls(
     # Calculate EUR for each well
     eur_results = []
     for well_id, well_data in panel_df.groupby(well_id_col):
-        # Check minimum months
         if len(well_data) < min_months:
             continue
 
-        # Prepare data for estimate_eur (needs DataFrame with datetime index)
         well_df = well_data.set_index(date_col)
         well_df = well_df[[value_col]].rename(columns={value_col: "oil"})
 
@@ -226,7 +221,6 @@ def eur_with_company_controls(
             merge_cols.append(county_col)
 
         static_info = panel_df.groupby(well_id_col)[merge_cols].first()
-        # Rename columns to match expected output names
         rename_map = {}
         if company_col in merge_cols:
             rename_map[company_col] = "company"
@@ -301,16 +295,14 @@ def company_fixed_effects_regression(
         for var in control_vars:
             if var in eur_results.columns:
                 df[var] = eur_results[var]
-                df = df.dropna(subset=[var])  # Remove rows with missing control vars
+                df = df.dropna(subset=[var])
 
-    # Create company dummy variables
     companies = []
     if company_col and company_col in df.columns:
         companies = list(df[company_col].dropna().unique())
         for company in companies:
             df[f"company_{company}"] = (df[company_col] == company).astype(int)
 
-    # Create county dummy variables if county column exists
     counties = []
     if county_col and county_col in df.columns:
         counties = list(df[county_col].dropna().unique())

@@ -39,7 +39,6 @@ def validate_no_future_data(
         "errors": [],
     }
 
-    # Check that all dates are before cutoff
     if date_column in data.columns:
         future_dates = data[data[date_column] > forecast_cutoff_date]
         if len(future_dates) > 0:
@@ -48,11 +47,9 @@ def validate_no_future_data(
                 f"Found {len(future_dates)} rows with dates after cutoff"
             )
 
-    # Check feature columns if specified
     if feature_columns:
         for col in feature_columns:
             if col in data.columns:
-                # Check for any NaN values that might indicate future data issues
                 nan_count = data[col].isna().sum()
                 if nan_count > len(data) * 0.5:  # More than 50% NaN is suspicious
                     checks["errors"].append(
@@ -89,7 +86,6 @@ def validate_training_split(
         checks["errors"].append("Date column not found in data")
         return checks
 
-    # Check that all training dates are before test dates
     max_train_date = train_data[date_column].max()
     min_test_date = test_data[date_column].min()
 
@@ -100,7 +96,6 @@ def validate_training_split(
             f"test data starts at {min_test_date}"
         )
 
-    # Check for date overlap
     train_dates = set(train_data[date_column])
     test_dates = set(test_data[date_column])
     overlap = train_dates.intersection(test_dates)
@@ -163,7 +158,6 @@ def validate_normalization(
         "errors": [],
     }
 
-    # If dates are provided, check that transform data doesn't predate fit data
     if fit_dates is not None and transform_dates is not None:
         max_fit_date = fit_dates.max()
         min_transform_date = transform_dates.min()
@@ -199,9 +193,6 @@ def check_sequence_preparation(
         "errors": [],
     }
 
-    # Check that targets come after sequences
-    # This is a simplified check - in practice would need to verify
-    # that target[i] corresponds to data after sequence[i]
 
     if len(sequences) != len(targets):
         checks["proper_sequencing"] = False
@@ -239,7 +230,6 @@ def comprehensive_leakage_check(
         "warnings": [],
     }
 
-    # Check main dataset
     main_check = validate_no_future_data(
         production_data, "date", forecast_cutoff_date, feature_columns
     )
@@ -248,7 +238,6 @@ def comprehensive_leakage_check(
         results["overall_valid"] = False
         results["errors"].extend(main_check["errors"])
 
-    # Check training/test split if provided
     if training_data is not None and test_data is not None:
         split_check = validate_training_split(training_data, test_data, "date")
         results["checks"]["train_test_split"] = split_check

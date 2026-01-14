@@ -64,7 +64,6 @@ def compare_models(
 
     for model_name in model_names:
         try:
-            # Fit and forecast
             forecast, params = fit_forecast(
                 data, model_name=model_name, horizon=horizon, phase=phase, **kwargs
             )

@@ -16,18 +16,7 @@ from ressmith.objects.domain import (
     ForecastResult,
     ForecastSpec,
 )
-from ressmith.primitives.models import (
-    ArpsExponentialModel,
-    ArpsHarmonicModel,
-    ArpsHyperbolicModel,
-    DuongModel,
-    FixedTerminalDeclineModel,
-    HyperbolicToExponentialSwitchModel,
-    LinearDeclineModel,
-    PowerLawDeclineModel,
-    SegmentedDeclineModel,
-    StretchedExponentialModel,
-)
+from ressmith.primitives.models import MODEL_REGISTRY, SegmentedDeclineModel
 from ressmith.tasks.core import BatchTask, EconTask, FitDeclineTask
 
 logger = logging.getLogger(__name__)
@@ -60,21 +49,10 @@ def fit_forecast(
     """
     logger.info(f"Starting fit_forecast with model={model_name}, horizon={horizon}")
 
-    model_map = {
-        "arps_exponential": ArpsExponentialModel,
-        "arps_hyperbolic": ArpsHyperbolicModel,
-        "arps_harmonic": ArpsHarmonicModel,
-        "linear_decline": LinearDeclineModel,
-        "hyperbolic_to_exponential": HyperbolicToExponentialSwitchModel,
-        "power_law": PowerLawDeclineModel,
-        "duong": DuongModel,
-        "stretched_exponential": StretchedExponentialModel,
-        "fixed_terminal_decline": FixedTerminalDeclineModel,
-    }
-    if model_name not in model_map:
+    if model_name not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model: {model_name}")
 
-    model = model_map[model_name](**kwargs)
+    model = MODEL_REGISTRY[model_name](**kwargs)
 
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
     fitted_model, forecast_result = task.run(data, horizon=horizon)
@@ -198,7 +176,6 @@ def full_run(
         Result bundle with forecast, params, econ_result (if spec provided)
     """
     logger.info("Starting full_run")
-    # Fit and forecast
     forecast, params = fit_forecast(
         data, model_name=model_name, horizon=horizon, **kwargs
     )
