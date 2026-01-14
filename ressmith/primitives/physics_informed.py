@@ -228,9 +228,8 @@ class MaterialBalanceDecline(BaseDeclineModel):
                     rates[i] = params.get("qi", N * D * 0.1)
 
             elif drive_mechanism == "gas_reservoir":
-                # For gas reservoirs, use p/Z method
-                G = params.get("G", N * 1000.0)  # Convert to SCF
-                    Gp = params.get("Gp", Np_i * 1000.0)
+                G = params.get("G", N * 1000.0)
+                Gp = params.get("Gp", Np_i * 1000.0)
                 mb_params = GasReservoirParams(
                     G=G,
                     pi=pi,
