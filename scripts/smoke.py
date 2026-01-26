@@ -33,13 +33,13 @@ def main() -> int:
     timesmith_path = repo_root.parent / "timesmith"
     if timesmith_path.exists() and (timesmith_path / "pyproject.toml").exists():
         print(f"   Found local timesmith at {timesmith_path}")
-        code = run_command(["pip", "install", "-e", str(timesmith_path)])
+        code = run_command(["uv", "pip", "install", "-e", str(timesmith_path)])
         if code != 0:
             print("   Local install failed, trying PyPI...")
-            code = run_command(["pip", "install", "timesmith>=0.2.0"])
+            code = run_command(["uv", "pip", "install", "timesmith>=0.2.0"])
     else:
         print("   Installing timesmith from PyPI...")
-        code = run_command(["pip", "install", "timesmith>=0.2.0"])
+        code = run_command(["uv", "pip", "install", "timesmith>=0.2.0"])
 
     if code != 0:
         print("Failed to install timesmith")
@@ -47,7 +47,7 @@ def main() -> int:
 
     # Step 2: Install ressmith in development mode
     print("\n2. Installing ressmith in development mode...")
-    code = run_command(["pip", "install", "-e", "."], cwd=repo_root)
+    code = run_command(["uv", "sync", "--group", "dev"], cwd=repo_root)
     if code != 0:
         print("Failed to install ressmith")
         return code
@@ -59,7 +59,7 @@ def main() -> int:
         print(f"Example not found: {example_path}")
         return 1
 
-    code = run_command([sys.executable, str(example_path)], cwd=repo_root)
+    code = run_command(["uv", "run", "python", str(example_path)], cwd=repo_root)
     if code != 0:
         print("Integration example failed")
         return code

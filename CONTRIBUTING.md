@@ -24,15 +24,14 @@ cd ressmith
 ### 2. Set Up Development Environment
 
 ```bash
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install in development mode with all dependencies
-pip install -e ".[dev,docs,all]"
+# Install dependencies (including dev, docs, and all optional groups)
+uv sync --group dev --extra docs --extra examples
 
-# Install pre-commit hooks
-pre-commit install
+# Install pre-commit hooks (if pre-commit is configured)
+uv run pre-commit install
 ```
 
 ### 3. Create a Branch
@@ -46,14 +45,14 @@ git checkout -b feature/your-feature-name
 
 ### Code Style
 
-We use Black for code formatting and flake8 for linting:
+We use Black for code formatting and Ruff for linting:
 
 ```bash
 # Format code
-black ressmith tests
+uv run black ressmith tests
 
 # Check linting
-flake8 ressmith tests
+uv run ruff check ressmith tests
 ```
 
 Key conventions:
@@ -69,10 +68,10 @@ All new features and bug fixes should include tests:
 
 ```bash
 # Run all tests
-pytest tests/
+uv run pytest tests/
 
 # Run with coverage
-pytest tests/ --cov=ressmith --cov-report=html
+uv run pytest tests/ --cov=ressmith --cov-report=html
 ```
 
 Test guidelines:
@@ -89,8 +88,11 @@ Test guidelines:
 Update documentation for any user-facing changes:
 
 ```bash
-# Build documentation locally
-mkdocs serve
+# Build documentation locally (if using mkdocs)
+uv run mkdocs serve
+
+# Or build with sphinx (if using sphinx)
+uv run sphinx-build -b html docs/ docs/_build/html
 ```
 
 ### Commit Messages
@@ -121,10 +123,10 @@ Commit message format:
 
 Before submitting a PR, ensure:
 
-- All tests pass: pytest tests/
-- Code is formatted: black ressmith tests
-- Linting passes: flake8 ressmith tests
-- Documentation builds: mkdocs build
+- All tests pass: `uv run pytest tests/`
+- Code is formatted: `uv run black ressmith tests`
+- Linting passes: `uv run ruff check ressmith tests`
+- Documentation builds: `uv run sphinx-build -b html docs/ docs/_build/html` (or `uv run mkdocs build`)
 - New features have tests
 - New features have documentation
 

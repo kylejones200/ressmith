@@ -16,14 +16,14 @@ echo ""
 echo "1. Installing timesmith..."
 if [ -d "$MONOREPO_ROOT/timesmith" ]; then
     cd "$MONOREPO_ROOT/timesmith"
-    pip install -e .
+    uv pip install -e .
     echo "   timesmith installed from local path"
 elif [ -d "$REPO_ROOT/../timesmith" ]; then
     cd "$REPO_ROOT/../timesmith"
-    pip install -e .
+    uv pip install -e .
     echo "   timesmith installed from local path"
 else
-    pip install "timesmith>=0.2.0"
+    uv pip install "timesmith>=0.2.0"
     echo "   timesmith installed from PyPI"
 fi
 
@@ -36,12 +36,12 @@ for repo in "${REPOS[@]}"; do
     if [ -d "$MONOREPO_ROOT/$repo" ]; then
         echo "   Installing $repo..."
         cd "$MONOREPO_ROOT/$repo"
-        pip install -e .
+        uv sync --group dev
         echo "   $repo installed"
     elif [ -d "$REPO_ROOT/../$repo" ]; then
         echo "   Installing $repo..."
         cd "$REPO_ROOT/../$repo"
-        pip install -e .
+        uv sync --group dev
         echo "   $repo installed"
     else
         echo "   $repo not found, skipping"
@@ -55,12 +55,12 @@ for repo in "${REPOS[@]}"; do
     if [ -d "$MONOREPO_ROOT/$repo" ] && [ -f "$MONOREPO_ROOT/$repo/scripts/smoke.py" ]; then
         echo ""
         echo "   Running smoke test for $repo..."
-        python "$MONOREPO_ROOT/$repo/scripts/smoke.py"
+        uv run python "$MONOREPO_ROOT/$repo/scripts/smoke.py"
         echo "   $repo smoke test passed"
     elif [ -d "$REPO_ROOT/../$repo" ] && [ -f "$REPO_ROOT/../$repo/scripts/smoke.py" ]; then
         echo ""
         echo "   Running smoke test for $repo..."
-        python "$REPO_ROOT/../$repo/scripts/smoke.py"
+        uv run python "$REPO_ROOT/../$repo/scripts/smoke.py"
         echo "   $repo smoke test passed"
     else
         echo "   $repo smoke test not found, skipping"

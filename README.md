@@ -72,15 +72,25 @@ result = perform_nodal_analysis(
 
 ## Installation
 
+For end users installing from PyPI:
+
 ```bash
-pip install ressmith
+uv pip install ressmith
 ```
 
 Or with optional dependencies:
 
 ```bash
-pip install ressmith[fit]  # Include scipy for optimization
-pip install ressmith[viz]  # Include matplotlib (or use plotsmith)
+uv pip install ressmith[fit]  # Include scipy for optimization
+uv pip install ressmith[viz]  # Include matplotlib (or use plotsmith)
+```
+
+For development, clone the repository and use uv:
+
+```bash
+git clone https://github.com/kylejones200/ressmith.git
+cd ressmith
+uv sync --group dev
 ```
 
 ## Features
@@ -194,14 +204,20 @@ This library is being migrated from the `pydca` (decline-curve) repository. See:
 ## Development
 
 ```bash
-# Install in development mode
-pip install -e ".[dev]"
+# Install dependencies (including dev group)
+uv sync --group dev
 
 # Run tests
-pytest
+uv run pytest
+
+# Run linting
+uv run ruff check .
+
+# Format code
+uv run black ressmith tests
 
 # Run examples
-python examples/basic_fit_forecast.py
+uv run python examples/basic_fit_forecast.py
 ```
 
 ## Requirements

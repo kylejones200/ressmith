@@ -28,17 +28,11 @@ fit = [
 viz = [
   "matplotlib>=3.7.0",
 ]
-dev = [
-  "pytest>=7.0",
-  "pytest-cov>=4.0",
-  "ruff>=0.1.0",
-  "black>=23.0.0",
-  "mypy>=1.0.0",
-]
 docs = [
   "sphinx>=7.0",
   "sphinx-rtd-theme>=2.0",
-  "sphinx-autodoc-typehints>=1.20"
+  "sphinx-autodoc-typehints>=1.20",
+  "myst-parser>=2.0",
 ]
 examples = [
   "jupyter>=1.0",
@@ -46,7 +40,18 @@ examples = [
   "ipykernel>=6.0"
 ]
 all = [
-  "ressmith[fit,viz,dev,docs,examples]"
+  "ressmith[fit,viz,docs,examples]"
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+  "ruff>=0.1.0",
+  "black>=23.0.0",
+  "mypy>=1.0.0",
+  "build>=1.0.0",
+  "twine>=5.0.0",
 ]
 
 [project.urls]

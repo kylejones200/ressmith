@@ -1,3 +1,7 @@
+# LEGACY: This file is kept for Read the Docs compatibility.
+# The source of truth for dependencies is pyproject.toml.
+# For local development, use: uv sync --extra docs
+#
 sphinx>=7.0
 sphinx-rtd-theme>=2.0
 sphinx-autodoc-typehints>=1.20
