@@ -21,6 +21,7 @@ from typing import Any
 
 import numpy as np
 
+from ressmith.primitives.advanced_decline import fit_duong
 from ressmith.utils.errors import ERR_INSUFFICIENT_DATA, format_error
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,27 @@ class FMBResult:
     normalized_cumulative: np.ndarray
     estimated_ooip: float
     recovery_factor: float
+
+
+@dataclass
+class DNTypeCurveResult:
+    """Container for Duong-Nguyen (DN) type curve analysis results.
+
+    Attributes:
+        normalized_rate: Normalized rate
+        normalized_time: Normalized time (t^m)
+        flow_regime: Identified flow regime
+        duong_a: Duong parameter a
+        duong_m: Duong parameter m
+        estimated_srv: Estimated SRV (acre-ft)
+    """
+
+    normalized_rate: np.ndarray
+    normalized_time: np.ndarray
+    flow_regime: str
+    duong_a: float
+    duong_m: float
+    estimated_srv: float
 
 
 def generate_blasingame_type_curve(
@@ -253,4 +275,93 @@ def analyze_complex_fracture_network(
         "effective_fracture_half_length": float(effective_half_length),
         "estimated_decline_rate": float(decline_rate),
     }
+
+
+def generate_dn_type_curve(
+    time: np.ndarray,
+    rate: np.ndarray,
+    pressure: np.ndarray | None = None,
+    initial_pressure: float = 5000.0,
+) -> DNTypeCurveResult:
+    """Generate Duong-Nguyen (DN) type curve.
+
+    DN type curve is specifically designed for tight and fracture-dominated
+    gas reservoirs using Duong's approach with normalized time.
+
+    Args:
+        time: Production time (days)
+        rate: Production rate (STB/day or MCF/day)
+        pressure: Optional pressure data (psi)
+        initial_pressure: Initial reservoir pressure (psi)
+
+    Returns:
+        DNTypeCurveResult with normalized data and analysis
+
+    Reference:
+        Duong, A.N., "An Unconventional Rate Decline Approach for Tight and
+        Fracture-Dominated Gas Reservoirs," SPE 137748, 2010.
+        Nguyen, D., et al., "A New Type Curve for Production Data Analysis
+        of Tight Gas Reservoirs," SPE 163876, 2013.
+
+    Example:
+        >>> time = np.array([1, 10, 30, 60, 90])
+        >>> rate = np.array([1000, 800, 600, 500, 450])
+        >>> result = generate_dn_type_curve(time, rate)
+    """
+    valid_mask = (rate > 0) & (time > 0)
+    if np.sum(valid_mask) < 3:
+        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="DN type curve"))
+
+    time_valid = time[valid_mask]
+    rate_valid = rate[valid_mask]
+
+    # Fit Duong model to get parameters
+    try:
+        duong_params = fit_duong(time_valid, rate_valid)
+        duong_a = duong_params.get("a", 0.1)
+        duong_m = duong_params.get("m", 0.5)
+    except Exception:
+        duong_a = 0.1
+        duong_m = 0.5
+
+    # Normalize rate
+    if pressure is not None:
+        pressure_valid = pressure[valid_mask]
+        pressure_drop = initial_pressure - pressure_valid
+        normalized_rate = rate_valid / np.maximum(pressure_drop, 1.0)
+    else:
+        normalized_rate = rate_valid / np.max(rate_valid)
+
+    # DN normalized time: t^m
+    normalized_time = time_valid**duong_m
+
+    # Identify flow regime
+    if len(normalized_rate) >= 5:
+        # Linear flow: q vs t^m should be linear
+        coeffs = np.polyfit(normalized_time[:5], normalized_rate[:5], 1)
+        if coeffs[0] < -0.1:
+            flow_regime = "linear"
+        else:
+            flow_regime = "boundary_dominated"
+    else:
+        flow_regime = "transient"
+
+    # Estimate SRV from cumulative
+    if len(time_valid) > 1:
+        time_deltas = np.diff(np.concatenate([[0], time_valid]))
+        cumulative = np.cumsum(rate_valid * time_deltas)
+        max_cumulative = np.max(cumulative)
+        # Rough SRV estimate
+        estimated_srv = max_cumulative / 1000.0
+    else:
+        estimated_srv = 0.0
+
+    return DNTypeCurveResult(
+        normalized_rate=normalized_rate,
+        normalized_time=normalized_time,
+        flow_regime=flow_regime,
+        duong_a=float(duong_a),
+        duong_m=float(duong_m),
+        estimated_srv=float(estimated_srv),
+    )
 

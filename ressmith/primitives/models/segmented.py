@@ -203,3 +203,5 @@ class SegmentedDeclineModel(BaseDeclineModel):
             "supports_intervals": False,
         }
 
+
+

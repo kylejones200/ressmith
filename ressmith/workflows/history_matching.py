@@ -12,12 +12,12 @@ Features:
 """
 
 import logging
-from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import differential_evolution, minimize
 
+from ressmith.objects.domain import HistoryMatchResult
 from ressmith.primitives.material_balance import (
     GasReservoirParams,
     SolutionGasDriveParams,
@@ -26,29 +26,6 @@ from ressmith.primitives.material_balance import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class HistoryMatchResult:
-    """Container for history matching results.
-
-    Attributes:
-        optimized_params: Optimized parameter dictionary
-        objective_value: Final objective function value
-        success: Whether optimization converged
-        message: Optimization message
-        iterations: Number of iterations
-        pressure_match: Pressure matching statistics
-        production_match: Production matching statistics
-    """
-
-    optimized_params: dict[str, float]
-    objective_value: float
-    success: bool
-    message: str
-    iterations: int
-    pressure_match: dict[str, float]
-    production_match: dict[str, float]
 
 
 def history_match_material_balance(
@@ -216,16 +193,12 @@ def history_match_material_balance(
             pi=optimized_params.get("pi", 5000.0),
         )
         calculated_production = np.zeros_like(time)
-        for i, (t_i, p_i) in enumerate(
-            zip(
-                time,
-                (
-                    pressure
-                    if pressure is not None
-                    else [optimized_params.get("pi", 5000.0)] * len(time)
-                ),
-            )
-        ):
+        pressure_array = (
+            pressure
+            if pressure is not None
+            else np.full(len(time), optimized_params.get("pi", 5000.0))
+        )
+        for i, p_i in enumerate(pressure_array):
             mb_result = solution_gas_drive_material_balance(
                 p_i, calculated_production[i - 1] if i > 0 else 0.0, mb_params
             )
@@ -357,6 +330,186 @@ def sensitivity_analysis_material_balance(
                     "value": variation,
                     "variation_pct": (variation / base_params[param_name] - 1) * 100,
                     "rmse": error,
+                }
+            )
+
+    return pd.DataFrame(results)
+
+
+def calculate_history_match_objective(
+    observed_data: pd.DataFrame,
+    calculated_data: pd.DataFrame,
+    weights: dict[str, float] | None = None,
+    objective_type: str = "weighted_rmse",
+) -> dict[str, float]:
+    """Calculate objective function for history matching.
+
+    Calculates various objective functions for history matching workflows.
+
+    Args:
+        observed_data: Observed production/pressure data
+        calculated_data: Calculated production/pressure data
+        weights: Optional weights for different phases
+        objective_type: Objective function type ('weighted_rmse', 'weighted_mae', 'nash_sutcliffe')
+
+    Returns:
+        Dictionary with objective function value and component metrics
+
+    Example:
+        >>> import pandas as pd
+        >>> observed = pd.DataFrame({'oil': [100, 95, 90]}, index=pd.date_range('2020-01-01', periods=3))
+        >>> calculated = pd.DataFrame({'oil': [98, 94, 89]}, index=pd.date_range('2020-01-01', periods=3))
+        >>> objective = calculate_history_match_objective(observed, calculated)
+        >>> print(f"Objective value: {objective['objective_value']:.2f}")
+    """
+    logger.info(f"Calculating history match objective: type={objective_type}")
+
+    if weights is None:
+        weights = {col: 1.0 for col in observed_data.columns}
+
+    # Align data
+    common_index = observed_data.index.intersection(calculated_data.index)
+    if len(common_index) == 0:
+        raise ValueError("No common time index between observed and calculated data")
+
+    observed_aligned = observed_data.loc[common_index]
+    calculated_aligned = calculated_data.loc[common_index]
+
+    component_metrics = {}
+    weighted_errors = []
+
+    for col in observed_aligned.columns:
+        if col not in calculated_aligned.columns:
+            continue
+
+        obs = observed_aligned[col].values
+        calc = calculated_aligned[col].values
+
+        # Calculate metrics
+        residuals = obs - calc
+        rmse = np.sqrt(np.mean(residuals**2))
+        mae = np.mean(np.abs(residuals))
+
+        # MAPE
+        valid_mask = obs > 0
+        if valid_mask.any():
+            mape = np.mean(np.abs(residuals[valid_mask] / obs[valid_mask])) * 100
+        else:
+            mape = float("inf")
+
+        # R²
+        ss_res = np.sum(residuals**2)
+        ss_tot = np.sum((obs - np.mean(obs)) ** 2)
+        r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+
+        component_metrics[col] = {
+            "rmse": float(rmse),
+            "mae": float(mae),
+            "mape": float(mape),
+            "r_squared": float(r_squared),
+        }
+
+        # Weighted error
+        weight = weights.get(col, 1.0)
+        if objective_type == "weighted_rmse":
+            weighted_errors.append(weight * rmse)
+        elif objective_type == "weighted_mae":
+            weighted_errors.append(weight * mae)
+        elif objective_type == "nash_sutcliffe":
+            # Nash-Sutcliffe efficiency
+            nse = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+            weighted_errors.append(weight * (1 - nse))  # Convert to error (lower is better)
+        else:
+            weighted_errors.append(weight * rmse)
+
+    objective_value = sum(weighted_errors) / len(weighted_errors) if weighted_errors else float("inf")
+
+    return {
+        "objective_value": float(objective_value),
+        "objective_type": objective_type,
+        "component_metrics": component_metrics,
+    }
+
+
+def run_parameter_sensitivity_analysis(
+    history_match_result: HistoryMatchResult,
+    time: np.ndarray,
+    production: np.ndarray,
+    pressure: np.ndarray | None = None,
+    param_variations: dict[str, list[float]] | None = None,
+    n_samples: int = 100,
+) -> pd.DataFrame:
+    """Run parameter sensitivity analysis for history matching.
+
+    Analyzes sensitivity of history match quality to parameter variations.
+
+    Args:
+        history_match_result: History matching result
+        time: Time array (days)
+        production: Production data (STB)
+        pressure: Optional pressure data (psi)
+        param_variations: Parameter variations to test (if None, uses ±20%)
+        n_samples: Number of samples per parameter
+
+    Returns:
+        DataFrame with sensitivity analysis results
+
+    Example:
+        >>> result = history_match_material_balance(time, production, pressure)
+        >>> sensitivity = run_parameter_sensitivity_analysis(
+        ...     result, time, production, pressure
+        ... )
+        >>> print(sensitivity.head())
+    """
+    logger.info("Running parameter sensitivity analysis")
+
+    optimized_params = history_match_result.optimized_params
+
+    if param_variations is None:
+        param_variations = {}
+        for param_name, param_value in optimized_params.items():
+            if param_value > 0:
+                variations = np.linspace(
+                    param_value * 0.5, param_value * 1.5, n_samples
+                )
+                param_variations[param_name] = variations.tolist()
+
+    results = []
+
+    for param_name, variations in param_variations.items():
+        for variation in variations:
+            test_params = optimized_params.copy()
+            test_params[param_name] = variation
+
+            # Calculate objective function with test parameters
+            # Simplified: use exponential decline model
+            N = test_params.get("N", optimized_params.get("N", 1e6))
+            D = test_params.get("D", optimized_params.get("D", 0.001))
+            calculated_production = N * (1 - np.exp(-D * time))
+
+            # Calculate error
+            production_error = np.sqrt(np.mean((calculated_production - production) ** 2))
+
+            pressure_error = 0.0
+            if pressure is not None:
+                pi = test_params.get("pi", optimized_params.get("pi", 5000.0))
+                estimated_pressure = pi * np.exp(-D * time)
+                pressure_error = np.sqrt(np.mean((estimated_pressure - pressure) ** 2))
+
+            total_error = production_error + pressure_error
+
+            results.append(
+                {
+                    "parameter": param_name,
+                    "value": variation,
+                    "variation_pct": (
+                        (variation / optimized_params[param_name] - 1) * 100
+                        if optimized_params[param_name] > 0
+                        else 0.0
+                    ),
+                    "production_error": production_error,
+                    "pressure_error": pressure_error,
+                    "total_error": total_error,
                 }
             )
 

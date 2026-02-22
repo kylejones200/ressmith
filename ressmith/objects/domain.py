@@ -167,6 +167,29 @@ class DeclineSegment:
 
 
 @dataclass(frozen=True)
+class HistoryMatchResult:
+    """Container for history matching results.
+
+    Attributes:
+        optimized_params: Optimized parameter dictionary
+        objective_value: Final objective function value
+        success: Whether optimization converged
+        message: Optimization message
+        iterations: Number of iterations
+        pressure_match: Pressure matching statistics
+        production_match: Production matching statistics
+    """
+
+    optimized_params: dict[str, float]
+    objective_value: float
+    success: bool
+    message: str
+    iterations: int
+    pressure_match: dict[str, float]
+    production_match: dict[str, float]
+
+
+@dataclass(frozen=True)
 class SegmentedDeclineResult:
     """Result of segmented decline curve analysis."""
 

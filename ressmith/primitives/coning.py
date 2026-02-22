@@ -348,3 +348,135 @@ def analyze_coning(
         method=method,
     )
 
+
+def forecast_wor_with_breakthrough(
+    time: np.ndarray,
+    oil_rate: np.ndarray,
+    breakthrough_time: float | None,
+    initial_wor: float = 0.0,
+    post_breakthrough_wor_slope: float = 0.01,
+    max_wor: float = 10.0,
+) -> np.ndarray:
+    """Forecast WOR (Water-Oil Ratio) with breakthrough model.
+
+    Models WOR as constant before breakthrough, then increasing after breakthrough.
+
+    Args:
+        time: Time array (days)
+        oil_rate: Oil production rate array (STB/day)
+        breakthrough_time: Time to breakthrough (days, or None if no breakthrough)
+        initial_wor: Initial WOR before breakthrough (default: 0.0)
+        post_breakthrough_wor_slope: WOR increase rate after breakthrough (default: 0.01)
+        max_wor: Maximum WOR limit (default: 10.0)
+
+    Returns:
+        WOR array (bbl water / bbl oil)
+
+    Example:
+        >>> time = np.arange(0, 1000, 30)
+        >>> oil_rate = np.full(len(time), 500)
+        >>> wor = forecast_wor_with_breakthrough(
+        ...     time, oil_rate, breakthrough_time=365
+        ... )
+    """
+    wor = np.full_like(time, initial_wor, dtype=float)
+
+    if breakthrough_time is not None and breakthrough_time < np.max(time):
+        # After breakthrough, WOR increases
+        breakthrough_idx = np.searchsorted(time, breakthrough_time)
+        for i in range(breakthrough_idx, len(time)):
+            time_since_breakthrough = time[i] - breakthrough_time
+            wor[i] = initial_wor + post_breakthrough_wor_slope * time_since_breakthrough
+            wor[i] = min(wor[i], max_wor)
+
+    return wor
+
+
+def forecast_gor_with_breakthrough(
+    time: np.ndarray,
+    oil_rate: np.ndarray,
+    breakthrough_time: float | None,
+    initial_gor: float = 1000.0,
+    post_breakthrough_gor_slope: float = 50.0,
+    max_gor: float = 50000.0,
+) -> np.ndarray:
+    """Forecast GOR (Gas-Oil Ratio) with breakthrough model.
+
+    Models GOR as constant before breakthrough, then increasing after breakthrough.
+
+    Args:
+        time: Time array (days)
+        oil_rate: Oil production rate array (STB/day)
+        breakthrough_time: Time to gas breakthrough (days, or None if no breakthrough)
+        initial_gor: Initial GOR before breakthrough (SCF/STB, default: 1000)
+        post_breakthrough_gor_slope: GOR increase rate after breakthrough (SCF/STB/day, default: 50)
+        max_gor: Maximum GOR limit (SCF/STB, default: 50000)
+
+    Returns:
+        GOR array (SCF/STB)
+
+    Example:
+        >>> time = np.arange(0, 1000, 30)
+        >>> oil_rate = np.full(len(time), 500)
+        >>> gor = forecast_gor_with_breakthrough(
+        ...     time, oil_rate, breakthrough_time=365
+        ... )
+    """
+    gor = np.full_like(time, initial_gor, dtype=float)
+
+    if breakthrough_time is not None and breakthrough_time < np.max(time):
+        # After breakthrough, GOR increases
+        breakthrough_idx = np.searchsorted(time, breakthrough_time)
+        for i in range(breakthrough_idx, len(time)):
+            time_since_breakthrough = time[i] - breakthrough_time
+            gor[i] = initial_gor + post_breakthrough_gor_slope * time_since_breakthrough
+            gor[i] = min(gor[i], max_gor)
+
+    return gor
+
+
+def forecast_water_cut_with_breakthrough(
+    time: np.ndarray,
+    oil_rate: np.ndarray,
+    breakthrough_time: float | None,
+    initial_water_cut: float = 0.0,
+    post_breakthrough_water_cut_slope: float = 0.0001,
+    max_water_cut: float = 0.95,
+) -> np.ndarray:
+    """Forecast water cut with breakthrough model.
+
+    Models water cut as constant before breakthrough, then increasing after breakthrough.
+
+    Args:
+        time: Time array (days)
+        oil_rate: Oil production rate array (STB/day)
+        breakthrough_time: Time to breakthrough (days, or None if no breakthrough)
+        initial_water_cut: Initial water cut before breakthrough (fraction, default: 0.0)
+        post_breakthrough_water_cut_slope: Water cut increase rate after breakthrough (default: 0.0001)
+        max_water_cut: Maximum water cut limit (fraction, default: 0.95)
+
+    Returns:
+        Water cut array (fraction, 0-1)
+
+    Example:
+        >>> time = np.arange(0, 1000, 30)
+        >>> oil_rate = np.full(len(time), 500)
+        >>> water_cut = forecast_water_cut_with_breakthrough(
+        ...     time, oil_rate, breakthrough_time=365
+        ... )
+    """
+    water_cut = np.full_like(time, initial_water_cut, dtype=float)
+
+    if breakthrough_time is not None and breakthrough_time < np.max(time):
+        # After breakthrough, water cut increases
+        breakthrough_idx = np.searchsorted(time, breakthrough_time)
+        for i in range(breakthrough_idx, len(time)):
+            time_since_breakthrough = time[i] - breakthrough_time
+            water_cut[i] = (
+                initial_water_cut
+                + post_breakthrough_water_cut_slope * time_since_breakthrough
+            )
+            water_cut[i] = min(water_cut[i], max_water_cut)
+
+    return water_cut
+

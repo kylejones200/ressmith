@@ -13,6 +13,7 @@ import pandas as pd
 from ressmith.primitives.eor import (
     analyze_waterflood_pattern,
     calculate_mobility_ratio,
+    predict_pattern_flood_performance,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,4 +139,72 @@ def calculate_mobility_ratio_workflow(
         water_relative_permeability=water_relative_permeability,
         oil_relative_permeability=oil_relative_permeability,
     )
+
+
+def predict_waterflood_performance(
+    pattern_type: Literal["five_spot", "line_drive", "peripheral"],
+    injection_rate: float,
+    mobility_ratio: float,
+    oil_saturation_initial: float,
+    oil_saturation_residual: float,
+    pore_volumes_injected: np.ndarray,
+    permeability_variation: float = 0.5,
+    voidage_replacement_ratio: float = 1.0,
+) -> pd.DataFrame:
+    """Predict waterflood pattern performance over time.
+
+    Parameters
+    ----------
+    pattern_type : str
+        Pattern type ('five_spot', 'line_drive', 'peripheral')
+    injection_rate : float
+        Injection rate (STB/day)
+    mobility_ratio : float
+        Mobility ratio (water/oil mobility)
+    oil_saturation_initial : float
+        Initial oil saturation (fraction)
+    oil_saturation_residual : float
+        Residual oil saturation (fraction)
+    pore_volumes_injected : np.ndarray
+        Array of pore volumes injected (fraction)
+    permeability_variation : float
+        Permeability variation (V) (default: 0.5)
+    voidage_replacement_ratio : float
+        Voidage replacement ratio (default: 1.0)
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with performance metrics:
+        - pore_volumes_injected: Pore volumes injected
+        - recovery_efficiency: Recovery efficiency (fraction)
+        - oil_rate: Oil production rate (STB/day)
+        - water_cut: Water cut (fraction)
+        - cumulative_oil: Cumulative oil recovery (STB)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> PV_inj = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+    >>> performance = predict_waterflood_performance(
+    ...     'five_spot', 1000, 2.0, 0.70, 0.25, PV_inj
+    ... )
+    >>> print(performance.head())
+    """
+    logger.info(f"Predicting waterflood performance: pattern={pattern_type}")
+
+    performance = predict_pattern_flood_performance(
+        pattern_type=pattern_type,
+        injection_rate=injection_rate,
+        mobility_ratio=mobility_ratio,
+        oil_saturation_initial=oil_saturation_initial,
+        oil_saturation_residual=oil_saturation_residual,
+        pore_volumes_injected=pore_volumes_injected,
+        permeability_variation=permeability_variation,
+        voidage_replacement_ratio=voidage_replacement_ratio,
+    )
+
+    return pd.DataFrame(performance)
+
+
 

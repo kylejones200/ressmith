@@ -289,3 +289,62 @@ def generate_diagnostic_plot_data(
 
     return result
 
+
+def prepare_boundary_dominated_plot_data(
+    time: np.ndarray | pd.Series,
+    rate: np.ndarray | pd.Series,
+    cumulative: np.ndarray | pd.Series | None = None,
+) -> pd.DataFrame:
+    """Prepare data for boundary-dominated flow diagnostic plot.
+
+    Parameters
+    ----------
+    time : np.ndarray or pd.Series
+        Production time (days)
+    rate : np.ndarray or pd.Series
+        Production rate (STB/day or MCF/day)
+    cumulative : np.ndarray or pd.Series, optional
+        Cumulative production (if None, calculated from rate)
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns: time, rate, cumulative
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> time = np.array([1, 10, 30, 60, 90, 120])
+    >>> rate = np.array([1000, 800, 600, 500, 450, 400])
+    >>> data = prepare_boundary_dominated_plot_data(time, rate)
+    >>> print(data.head())
+    """
+    logger.info("Preparing boundary-dominated flow plot data")
+
+    # Convert to arrays
+    if isinstance(time, pd.Series):
+        time = time.values
+    if isinstance(rate, pd.Series):
+        rate = rate.values
+
+    valid_mask = (time > 0) & (rate > 0)
+    time_valid = time[valid_mask]
+    rate_valid = rate[valid_mask]
+
+    # Calculate cumulative if not provided
+    if cumulative is None:
+        time_deltas = np.diff(np.concatenate([[0], time_valid]))
+        cumulative = np.cumsum(rate_valid * time_deltas)
+    else:
+        if isinstance(cumulative, pd.Series):
+            cumulative = cumulative.values
+        cumulative = cumulative[valid_mask]
+
+    return pd.DataFrame(
+        {
+            "time": time_valid,
+            "rate": rate_valid,
+            "cumulative": cumulative,
+        }
+    )
+

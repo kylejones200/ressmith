@@ -270,3 +270,99 @@ def calculate_mobility_ratio(
 
     return max(0.01, min(100.0, M))  # Reasonable bounds
 
+
+def predict_pattern_flood_performance(
+    pattern_type: Literal["five_spot", "line_drive", "peripheral"],
+    injection_rate: float,
+    mobility_ratio: float,
+    oil_saturation_initial: float,
+    oil_saturation_residual: float,
+    pore_volumes_injected: np.ndarray,
+    permeability_variation: float = 0.5,
+    voidage_replacement_ratio: float = 1.0,
+) -> dict[str, np.ndarray]:
+    """Predict waterflood pattern performance over time.
+
+    Predicts recovery efficiency, oil rate, water cut, and cumulative oil
+    recovery as a function of pore volumes injected.
+
+    Args:
+        pattern_type: Pattern type ('five_spot', 'line_drive', 'peripheral')
+        injection_rate: Injection rate (STB/day)
+        mobility_ratio: Mobility ratio (water/oil mobility)
+        oil_saturation_initial: Initial oil saturation (fraction)
+        oil_saturation_residual: Residual oil saturation (fraction)
+        pore_volumes_injected: Array of pore volumes injected (fraction)
+        permeability_variation: Permeability variation (V) (default: 0.5)
+        voidage_replacement_ratio: Voidage replacement ratio (default: 1.0)
+
+    Returns:
+        Dictionary with performance arrays:
+        - pore_volumes_injected: Pore volumes injected
+        - recovery_efficiency: Recovery efficiency (fraction)
+        - oil_rate: Oil production rate (STB/day)
+        - water_cut: Water cut (fraction)
+        - cumulative_oil: Cumulative oil recovery (STB)
+
+    Example:
+        >>> PV_inj = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        >>> performance = predict_pattern_flood_performance(
+        ...     'five_spot', 1000, 2.0, 0.70, 0.25, PV_inj
+        ... )
+    """
+    # Calculate sweep efficiencies for each PV injected
+    n_points = len(pore_volumes_injected)
+    recovery_efficiency = np.zeros(n_points)
+    oil_rate = np.zeros(n_points)
+    water_cut = np.zeros(n_points)
+    cumulative_oil = np.zeros(n_points)
+
+    # Calculate displacement efficiency (constant)
+    Ed = calculate_displacement_efficiency(
+        oil_saturation_initial, oil_saturation_residual
+    )
+
+    # Calculate pattern area (assumed)
+    pattern_area = 160.0  # acres (typical 5-spot)
+
+    for i, PV in enumerate(pore_volumes_injected):
+        # Calculate areal sweep efficiency
+        Ea = calculate_areal_sweep_efficiency(pattern_type, mobility_ratio, PV)
+
+        # Calculate vertical sweep efficiency
+        Ev = calculate_vertical_sweep_efficiency(
+            mobility_ratio, permeability_variation, PV
+        )
+
+        # Overall recovery efficiency
+        Er = Ea * Ed * Ev
+        recovery_efficiency[i] = Er
+
+        # Calculate oil rate (declines as recovery increases)
+        # Oil rate = injection_rate * (1 - water_cut) * recovery_factor
+        recovery_factor = 1.0 - (PV / 2.0)  # Declines with PV injected
+        recovery_factor = max(0.1, recovery_factor)
+
+        # Estimate water cut (increases with PV injected)
+        water_cut_est = min(0.95, PV * 1.5)  # Simplified model
+        water_cut[i] = water_cut_est
+
+        # Oil rate
+        oil_rate[i] = injection_rate * (1.0 - water_cut_est) * recovery_factor
+
+        # Cumulative oil (integral of oil rate)
+        if i == 0:
+            cumulative_oil[i] = oil_rate[i] * PV * 365.0  # Rough estimate
+        else:
+            # Integrate oil rate over time
+            dPV = pore_volumes_injected[i] - pore_volumes_injected[i - 1]
+            cumulative_oil[i] = cumulative_oil[i - 1] + oil_rate[i] * dPV * 365.0
+
+    return {
+        "pore_volumes_injected": pore_volumes_injected,
+        "recovery_efficiency": recovery_efficiency,
+        "oil_rate": oil_rate,
+        "water_cut": water_cut,
+        "cumulative_oil": cumulative_oil,
+    }
+

@@ -13,6 +13,8 @@ import pandas as pd
 from ressmith.primitives.interference import estimate_drainage_radius
 from ressmith.primitives.multi_well import (
     analyze_drainage_volumes,
+    analyze_five_spot_pattern,
+    analyze_nine_spot_pattern,
     calculate_drainage_overlap_matrix,
     model_multi_well_interaction,
     optimize_multi_well_spacing,
@@ -221,4 +223,80 @@ def optimize_field_spacing(
     logger.info(f"Spacing optimization completed. Recommended: {result['recommended_spacing']:.0f} ft")
 
     return result
+
+
+def analyze_well_pattern(
+    well_locations: pd.DataFrame,
+    pattern_type: str,
+    injection_well_id: str,
+    production_well_ids: list[str],
+    drainage_radii: dict[str, float] | pd.Series | None = None,
+) -> dict[str, Any]:
+    """Analyze well pattern (5-spot or 9-spot).
+
+    Parameters
+    ----------
+    well_locations : pd.DataFrame
+        DataFrame with columns: well_id, latitude, longitude
+    pattern_type : str
+        Pattern type: '5-spot' or '9-spot'
+    injection_well_id : str
+        ID of the injection well
+    production_well_ids : list
+        List of production well IDs
+    drainage_radii : dict or Series, optional
+        Dictionary/Series mapping well_id to drainage radius (ft)
+
+    Returns
+    -------
+    dict
+        Dictionary with pattern analysis results
+
+    Examples
+    --------
+    >>> locations = pd.DataFrame({
+    ...     'well_id': ['inj_1', 'prod_1', 'prod_2', 'prod_3', 'prod_4'],
+    ...     'latitude': [32.0, 32.001, 32.001, 31.999, 31.999],
+    ...     'longitude': [-97.0, -97.001, -96.999, -97.001, -96.999]
+    ... })
+    >>> result = analyze_well_pattern(
+    ...     locations,
+    ...     pattern_type='5-spot',
+    ...     injection_well_id='inj_1',
+    ...     production_well_ids=['prod_1', 'prod_2', 'prod_3', 'prod_4']
+    ... )
+    >>> print(f"Pattern spacing: {result['pattern_spacing']:.0f} ft")
+    >>> print(f"Sweep efficiency: {result['sweep_efficiency']:.2%}")
+    """
+    logger.info(f"Analyzing {pattern_type} pattern")
+
+    # Convert locations to dictionary
+    locations_dict = {
+        well_id: (
+            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[0],
+        )
+        for well_id in well_locations["well_id"]
+    }
+
+    # Convert drainage radii
+    if drainage_radii is not None and isinstance(drainage_radii, pd.Series):
+        drainage_radii = drainage_radii.to_dict()
+
+    if pattern_type.lower() == "5-spot":
+        return analyze_five_spot_pattern(
+            well_locations=locations_dict,
+            injection_well_id=injection_well_id,
+            production_well_ids=production_well_ids,
+            drainage_radii=drainage_radii,
+        )
+    elif pattern_type.lower() == "9-spot":
+        return analyze_nine_spot_pattern(
+            well_locations=locations_dict,
+            injection_well_id=injection_well_id,
+            production_well_ids=production_well_ids,
+            drainage_radii=drainage_radii,
+        )
+    else:
+        raise ValueError(f"Unknown pattern type: {pattern_type}. Must be '5-spot' or '9-spot'")
 

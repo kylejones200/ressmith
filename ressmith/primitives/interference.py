@@ -357,3 +357,171 @@ def optimize_well_spacing(
         "analysis": interference_result,
     }
 
+
+def calculate_eur_based_interference(
+    eur_1: float,
+    eur_2: float,
+    distance: float,
+    drainage_radius_1: float,
+    drainage_radius_2: float | None = None,
+) -> dict[str, float]:
+    """Calculate interference based on EUR and spacing.
+
+    Uses EUR to estimate interference impact on recovery.
+    Higher EUR wells typically have larger drainage volumes.
+
+    Args:
+        eur_1: EUR of first well (STB or MCF)
+        eur_2: EUR of second well (STB or MCF)
+        distance: Distance between wells (ft)
+        drainage_radius_1: Drainage radius of first well (ft)
+        drainage_radius_2: Drainage radius of second well (ft, optional)
+
+    Returns:
+        Dictionary with interference metrics:
+        - eur_interference_factor: EUR reduction factor (0-1)
+        - estimated_eur_loss_1: Estimated EUR loss for well 1 (STB or MCF)
+        - estimated_eur_loss_2: Estimated EUR loss for well 2 (STB or MCF)
+        - total_eur_loss: Total EUR loss (STB or MCF)
+
+    Reference:
+        Based on empirical relationships between spacing and EUR interference
+        in unconventional plays.
+
+    Example:
+        >>> result = calculate_eur_based_interference(
+        ...     eur_1=500000,
+        ...     eur_2=450000,
+        ...     distance=500,
+        ...     drainage_radius_1=600
+        ... )
+    """
+    if drainage_radius_2 is None:
+        drainage_radius_2 = drainage_radius_1
+
+    # Calculate geometric interference
+    interference_factor = calculate_interference_factor(
+        distance, drainage_radius_1, drainage_radius_2
+    )
+
+    # EUR interference is typically less than geometric overlap
+    # Empirical relationship: EUR interference ~ 0.6 * geometric interference
+    eur_interference_factor = interference_factor * 0.6
+
+    # Estimate EUR loss proportional to interference
+    estimated_eur_loss_1 = eur_1 * eur_interference_factor
+    estimated_eur_loss_2 = eur_2 * eur_interference_factor
+    total_eur_loss = estimated_eur_loss_1 + estimated_eur_loss_2
+
+    return {
+        "eur_interference_factor": float(eur_interference_factor),
+        "estimated_eur_loss_1": float(estimated_eur_loss_1),
+        "estimated_eur_loss_2": float(estimated_eur_loss_2),
+        "total_eur_loss": float(total_eur_loss),
+    }
+
+
+def optimize_spacing_from_eur(
+    eur_values: dict[str, float],
+    well_locations: dict[str, tuple[float, float]],
+    drainage_radii: dict[str, float] | None = None,
+    target_eur_loss_percent: float = 5.0,
+    min_spacing: float = 200.0,
+    max_spacing: float = 2000.0,
+) -> dict[str, Any]:
+    """Recommend optimal spacing based on EUR interference models.
+
+    Optimizes spacing to minimize EUR loss while maintaining economic viability.
+
+    Args:
+        eur_values: Dictionary mapping well_id to EUR (STB or MCF)
+        well_locations: Dictionary mapping well_id to (latitude, longitude)
+        drainage_radii: Dictionary mapping well_id to drainage radius (ft)
+        target_eur_loss_percent: Target maximum EUR loss percentage (default: 5%)
+        min_spacing: Minimum spacing constraint (ft)
+        max_spacing: Maximum spacing constraint (ft)
+
+    Returns:
+        Dictionary with spacing recommendations:
+        - recommended_spacing: Recommended spacing (ft)
+        - expected_eur_loss_percent: Expected EUR loss at recommended spacing
+        - spacing_analysis: Analysis for each well pair
+
+    Example:
+        >>> eur_vals = {'well_1': 500000, 'well_2': 450000}
+        >>> locations = {'well_1': (32.0, -97.0), 'well_2': (32.001, -97.001)}
+        >>> result = optimize_spacing_from_eur(eur_vals, locations)
+    """
+    if drainage_radii is None:
+        # Estimate drainage radius from EUR
+        # Rough approximation: r_drain ~ sqrt(EUR / (π * h * φ * So / Bo))
+        # Using typical values for unconventional plays
+        drainage_radii = {}
+        for well_id, eur in eur_values.items():
+            # Rough estimate: 1 MBO ~ 10 acres drainage (typical for shale)
+            drainage_area_acres = eur / 50000.0  # Rough approximation
+            drainage_radius_ft = np.sqrt(drainage_area_acres * 43560.0 / np.pi)
+            drainage_radii[well_id] = max(200.0, min(2000.0, drainage_radius_ft))
+
+    well_ids = list(well_locations.keys())
+    spacing_analysis = []
+
+    # Calculate average spacing needed to achieve target EUR loss
+    avg_eur = np.mean(list(eur_values.values()))
+    avg_radius = np.mean(list(drainage_radii.values()))
+
+    # Target interference factor to achieve target EUR loss
+    target_interference = target_eur_loss_percent / (100.0 * 0.6)  # Reverse of EUR interference model
+
+    # Estimate spacing from interference model
+    # For two equal circles: interference = f(distance / radius)
+    # Approximate: spacing ~ 2 * radius * (1 - target_interference)
+    recommended_spacing = 2.0 * avg_radius * (1.0 - target_interference * 0.5)
+    recommended_spacing = max(min_spacing, min(max_spacing, recommended_spacing))
+
+    # Analyze each well pair
+    for i, well_id_1 in enumerate(well_ids):
+        for j, well_id_2 in enumerate(well_ids):
+            if i < j:
+                lat1, lon1 = well_locations[well_id_1]
+                lat2, lon2 = well_locations[well_id_2]
+                distance = calculate_well_distance(lat1, lon1, lat2, lon2)
+
+                eur_1 = eur_values.get(well_id_1, avg_eur)
+                eur_2 = eur_values.get(well_id_2, avg_eur)
+                r1 = drainage_radii.get(well_id_1, avg_radius)
+                r2 = drainage_radii.get(well_id_2, avg_radius)
+
+                eur_interference = calculate_eur_based_interference(
+                    eur_1, eur_2, distance, r1, r2
+                )
+
+                spacing_analysis.append({
+                    "well_id_1": well_id_1,
+                    "well_id_2": well_id_2,
+                    "distance": float(distance),
+                    "eur_1": float(eur_1),
+                    "eur_2": float(eur_2),
+                    "eur_interference_factor": eur_interference["eur_interference_factor"],
+                    "total_eur_loss": eur_interference["total_eur_loss"],
+                })
+
+    # Calculate expected EUR loss at recommended spacing
+    avg_r1 = avg_radius
+    avg_r2 = avg_radius
+    avg_eur_1 = avg_eur
+    avg_eur_2 = avg_eur
+
+    expected_interference = calculate_interference_factor(
+        recommended_spacing, avg_r1, avg_r2
+    )
+    expected_eur_interference = expected_interference * 0.6
+    expected_eur_loss = (avg_eur_1 + avg_eur_2) * expected_eur_interference
+    expected_eur_loss_percent = (expected_eur_loss / (avg_eur_1 + avg_eur_2)) * 100.0
+
+    return {
+        "recommended_spacing": float(recommended_spacing),
+        "expected_eur_loss_percent": float(expected_eur_loss_percent),
+        "spacing_analysis": spacing_analysis,
+    }
+

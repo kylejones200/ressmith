@@ -69,10 +69,12 @@ from ressmith.primitives.rta import (
 from ressmith.primitives.interference import (
     InterferenceResult,
     analyze_well_interference,
+    calculate_eur_based_interference,
     calculate_interference_factor,
     calculate_well_distance,
     estimate_drainage_radius,
     estimate_production_interference,
+    optimize_spacing_from_eur,
     optimize_well_spacing,
 )
 # Coning Analysis
@@ -82,6 +84,9 @@ from ressmith.primitives.coning import (
     calculate_coning_index,
     chierici_ciucci_critical_rate,
     estimate_breakthrough_time,
+    forecast_gor_with_breakthrough,
+    forecast_water_cut_with_breakthrough,
+    forecast_wor_with_breakthrough,
     meyer_gardner_critical_rate,
 )
 # Type Curves
@@ -102,12 +107,31 @@ from ressmith.primitives.eor import (
     calculate_injection_efficiency,
     calculate_mobility_ratio,
     calculate_vertical_sweep_efficiency,
+    predict_pattern_flood_performance,
+)
+# Pressure Normalization
+from ressmith.primitives.pressure_normalization import (
+    calculate_pseudopressure,
+    normalize_cumulative_with_pressure,
+    normalize_for_type_curve_matching,
+    normalize_rate_with_pressure,
+)
+# Relative Permeability
+from ressmith.primitives.relative_permeability import (
+    apply_hysteresis_to_relative_permeability,
+    calculate_capillary_pressure,
+    calculate_oil_water_relative_permeability,
+    calculate_three_phase_relative_permeability,
+    corey_relative_permeability,
+    let_relative_permeability,
 )
 # Multi-Well Interaction
 from ressmith.primitives.multi_well import (
     DrainageVolume,
     MultiWellInteraction,
     analyze_drainage_volumes,
+    analyze_five_spot_pattern,
+    analyze_nine_spot_pattern,
     calculate_drainage_overlap_matrix,
     calculate_drainage_volume,
     model_multi_well_interaction,
@@ -128,6 +152,8 @@ from ressmith.primitives.advanced_rta import (
     BlasingameResult,
     FMBResult,
     analyze_complex_fracture_network,
+    generate_dn_type_curve,
+    DNTypeCurveResult,
     generate_blasingame_type_curve,
     generate_fmb_type_curve,
 )
@@ -270,7 +296,9 @@ __all__ = [
     "apply_facility_constraints",
     # Advanced RTA
     "BlasingameResult",
+    "DNTypeCurveResult",
     "FMBResult",
+    "generate_dn_type_curve",
     "generate_blasingame_type_curve",
     "generate_fmb_type_curve",
     "analyze_complex_fracture_network",
