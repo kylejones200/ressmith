@@ -6,7 +6,7 @@ decline curve analysis code using line_profiler.
 
 Usage:
     # Decorate functions you want to profile
-    from decline_curve.profiling import profile
+    from ressmith.workflows.profiling import profile
 
     @profile
     def my_function():
@@ -60,7 +60,7 @@ def profile(func: Callable) -> Callable:
         Wrapped function
 
     Example:
-        >>> from decline_curve.profiling import profile
+        >>> from ressmith.workflows.profiling import profile
         >>>
         >>> @profile
         >>> def compute_forecast(data):
@@ -71,7 +71,7 @@ def profile(func: Callable) -> Callable:
         >>> compute_forecast(data)
         >>>
         >>> # Print profiling results
-        >>> from decline_curve.profiling import print_stats
+        >>> from ressmith.workflows.profiling import print_stats
         >>> print_stats()
     """
     if not LINE_PROFILER_AVAILABLE:
@@ -94,7 +94,7 @@ def print_stats():
     Print profiling statistics for all profiled functions.
 
     Example:
-        >>> from decline_curve.profiling import print_stats
+        >>> from ressmith.workflows.profiling import print_stats
         >>> # After running profiled functions
         >>> print_stats()
     """
@@ -115,7 +115,7 @@ def save_stats(filename: str):
         filename: Output file path
 
     Example:
-        >>> from decline_curve.profiling import save_stats
+        >>> from ressmith.workflows.profiling import save_stats
         >>> save_stats("profiling_results.txt")
     """
     profiler = get_profiler()
@@ -142,7 +142,7 @@ def profile_context(name: str = "Operation", print_time: bool = True):
         Dictionary with timing information
 
     Example:
-        >>> from decline_curve.profiling import profile_context
+        >>> from ressmith.workflows.profiling import profile_context
         >>>
         >>> with profile_context("Forecasting 100 wells") as timer:
         >>>     for well in wells:
@@ -175,7 +175,7 @@ def time_function(func: Callable) -> Callable:
         Wrapped function that prints execution time
 
     Example:
-        >>> from decline_curve.profiling import time_function
+        >>> from ressmith.workflows.profiling import time_function
         >>>
         >>> @time_function
         >>> def slow_operation():

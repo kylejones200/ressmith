@@ -67,6 +67,15 @@ def walk_forward_backtest(
     ... )
     >>> print(results.groupby('horizon')['rmse'].mean())
     """
+    if not forecast_horizons:
+        raise ValueError("forecast_horizons must be non-empty")
+    if any(h <= 0 or not isinstance(h, (int, np.integer)) for h in forecast_horizons):
+        raise ValueError("forecast_horizons must be positive integers")
+    if not isinstance(min_train_size, int) or min_train_size <= 0:
+        raise ValueError("min_train_size must be a positive integer")
+    if not isinstance(step_size, int) or step_size <= 0:
+        raise ValueError("step_size must be a positive integer")
+
     logger.info(
         f"Starting walk-forward backtest: {len(forecast_horizons)} horizons, "
         f"min_train_size={min_train_size}"

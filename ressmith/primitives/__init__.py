@@ -6,11 +6,59 @@ Can import numpy, pandas, and ressmith.objects only.
 """
 
 # Base classes
+# Advanced RTA
+from ressmith.primitives.advanced_rta import (
+    BlasingameResult,
+    DNTypeCurveResult,
+    FMBResult,
+    analyze_complex_fracture_network,
+    generate_blasingame_type_curve,
+    generate_dn_type_curve,
+    generate_fmb_type_curve,
+)
 from ressmith.primitives.base import (
     BaseDeclineModel,
     BaseEconModel,
     BaseEstimator,
     BaseObject,
+)
+
+# Coning Analysis
+from ressmith.primitives.coning import (
+    ConingResult,
+    analyze_coning,
+    calculate_coning_index,
+    chierici_ciucci_critical_rate,
+    estimate_breakthrough_time,
+    forecast_gor_with_breakthrough,
+    forecast_water_cut_with_breakthrough,
+    forecast_wor_with_breakthrough,
+    meyer_gardner_critical_rate,
+)
+
+# EOR (Enhanced Oil Recovery)
+from ressmith.primitives.eor import (
+    WaterfloodPatternResult,
+    analyze_waterflood_pattern,
+    calculate_areal_sweep_efficiency,
+    calculate_displacement_efficiency,
+    calculate_injection_efficiency,
+    calculate_mobility_ratio,
+    calculate_vertical_sweep_efficiency,
+    predict_pattern_flood_performance,
+)
+
+# Well Interference
+from ressmith.primitives.interference import (
+    InterferenceResult,
+    analyze_well_interference,
+    calculate_eur_based_interference,
+    calculate_interference_factor,
+    calculate_well_distance,
+    estimate_drainage_radius,
+    estimate_production_interference,
+    optimize_spacing_from_eur,
+    optimize_well_spacing,
 )
 
 # IPR (Inflow Performance Relationship)
@@ -25,6 +73,7 @@ from ressmith.primitives.ipr import (
     linear_ipr,
     vogel_ipr,
 )
+
 # Material Balance
 from ressmith.primitives.material_balance import (
     GasCapDriveParams,
@@ -40,6 +89,53 @@ from ressmith.primitives.material_balance import (
     undersaturated_oil_material_balance,
     water_drive_material_balance,
 )
+
+# Multi-Well Interaction
+from ressmith.primitives.multi_well import (
+    DrainageVolume,
+    MultiWellInteraction,
+    analyze_drainage_volumes,
+    analyze_five_spot_pattern,
+    analyze_nine_spot_pattern,
+    calculate_drainage_overlap_matrix,
+    calculate_drainage_volume,
+    model_multi_well_interaction,
+    optimize_multi_well_spacing,
+)
+
+# Physics-informed decline
+from ressmith.primitives.physics_informed import (
+    MaterialBalanceDecline,
+    MaterialBalanceParams,
+    PressureDeclineModel,
+    PressureDeclineParams,
+)
+
+# Physics reserves
+from ressmith.primitives.physics_reserves import (
+    ReservesClassification,
+    classify_reserves_from_material_balance,
+)
+
+# Pressure Normalization
+from ressmith.primitives.pressure_normalization import (
+    calculate_pseudopressure,
+    normalize_cumulative_with_pressure,
+    normalize_for_type_curve_matching,
+    normalize_rate_with_pressure,
+)
+
+# Production Operations
+from ressmith.primitives.production_ops import (
+    AllocationResult,
+    FacilityConstraints,
+    allocate_production_optimal,
+    allocate_production_proportional,
+    apply_facility_constraints,
+    calculate_facility_utilization,
+    optimize_production_allocation,
+)
+
 # PVT (Pressure-Volume-Temperature) Properties
 from ressmith.primitives.pvt import (
     PVTProperties,
@@ -56,6 +152,20 @@ from ressmith.primitives.pvt import (
     water_fvf,
     water_viscosity,
 )
+
+# Relative Permeability
+from ressmith.primitives.relative_permeability import (
+    apply_hysteresis_to_relative_permeability,
+    calculate_capillary_pressure,
+    calculate_oil_water_relative_permeability,
+    calculate_three_phase_relative_permeability,
+    corey_relative_permeability,
+    let_relative_permeability,
+    van_genuchten_capillary_pressure,
+    van_genuchten_effective_saturation,
+    van_genuchten_m_from_n,
+)
+
 # RTA (Rate Transient Analysis)
 from ressmith.primitives.rta import (
     RTAResult,
@@ -65,30 +175,7 @@ from ressmith.primitives.rta import (
     estimate_permeability_from_production,
     identify_flow_regime,
 )
-# Well Interference
-from ressmith.primitives.interference import (
-    InterferenceResult,
-    analyze_well_interference,
-    calculate_eur_based_interference,
-    calculate_interference_factor,
-    calculate_well_distance,
-    estimate_drainage_radius,
-    estimate_production_interference,
-    optimize_spacing_from_eur,
-    optimize_well_spacing,
-)
-# Coning Analysis
-from ressmith.primitives.coning import (
-    ConingResult,
-    analyze_coning,
-    calculate_coning_index,
-    chierici_ciucci_critical_rate,
-    estimate_breakthrough_time,
-    forecast_gor_with_breakthrough,
-    forecast_water_cut_with_breakthrough,
-    forecast_wor_with_breakthrough,
-    meyer_gardner_critical_rate,
-)
+
 # Type Curves
 from ressmith.primitives.type_curves import (
     TypeCurveMatch,
@@ -98,65 +185,7 @@ from ressmith.primitives.type_curves import (
     match_type_curve,
     normalize_production_data,
 )
-# EOR (Enhanced Oil Recovery)
-from ressmith.primitives.eor import (
-    WaterfloodPatternResult,
-    analyze_waterflood_pattern,
-    calculate_areal_sweep_efficiency,
-    calculate_displacement_efficiency,
-    calculate_injection_efficiency,
-    calculate_mobility_ratio,
-    calculate_vertical_sweep_efficiency,
-    predict_pattern_flood_performance,
-)
-# Pressure Normalization
-from ressmith.primitives.pressure_normalization import (
-    calculate_pseudopressure,
-    normalize_cumulative_with_pressure,
-    normalize_for_type_curve_matching,
-    normalize_rate_with_pressure,
-)
-# Relative Permeability
-from ressmith.primitives.relative_permeability import (
-    apply_hysteresis_to_relative_permeability,
-    calculate_capillary_pressure,
-    calculate_oil_water_relative_permeability,
-    calculate_three_phase_relative_permeability,
-    corey_relative_permeability,
-    let_relative_permeability,
-)
-# Multi-Well Interaction
-from ressmith.primitives.multi_well import (
-    DrainageVolume,
-    MultiWellInteraction,
-    analyze_drainage_volumes,
-    analyze_five_spot_pattern,
-    analyze_nine_spot_pattern,
-    calculate_drainage_overlap_matrix,
-    calculate_drainage_volume,
-    model_multi_well_interaction,
-    optimize_multi_well_spacing,
-)
-# Production Operations
-from ressmith.primitives.production_ops import (
-    AllocationResult,
-    FacilityConstraints,
-    allocate_production_optimal,
-    allocate_production_proportional,
-    apply_facility_constraints,
-    calculate_facility_utilization,
-    optimize_production_allocation,
-)
-# Advanced RTA
-from ressmith.primitives.advanced_rta import (
-    BlasingameResult,
-    FMBResult,
-    analyze_complex_fracture_network,
-    generate_dn_type_curve,
-    DNTypeCurveResult,
-    generate_blasingame_type_curve,
-    generate_fmb_type_curve,
-)
+
 # Unit Conversion
 from ressmith.primitives.units import (
     INTERNAL_RATE_UNIT,
@@ -166,6 +195,7 @@ from ressmith.primitives.units import (
     convert_decline_rate,
     validate_units,
 )
+
 # VLP (Vertical Lift Performance)
 from ressmith.primitives.vlp import (
     NodalAnalysisResult,
@@ -176,6 +206,7 @@ from ressmith.primitives.vlp import (
     optimize_artificial_lift,
     perform_nodal_analysis,
 )
+
 # Well Testing
 from ressmith.primitives.well_test import (
     WellTestResult,
@@ -250,18 +281,23 @@ __all__ = [
     "calculate_productivity_index_from_test",
     # Interference
     "InterferenceResult",
+    "calculate_eur_based_interference",
     "calculate_well_distance",
     "estimate_drainage_radius",
     "calculate_interference_factor",
     "estimate_production_interference",
     "analyze_well_interference",
     "optimize_well_spacing",
+    "optimize_spacing_from_eur",
     # Coning
     "ConingResult",
     "meyer_gardner_critical_rate",
     "chierici_ciucci_critical_rate",
     "calculate_coning_index",
     "estimate_breakthrough_time",
+    "forecast_gor_with_breakthrough",
+    "forecast_water_cut_with_breakthrough",
+    "forecast_wor_with_breakthrough",
     "analyze_coning",
     # Type Curves
     "TypeCurveMatch",
@@ -272,6 +308,7 @@ __all__ = [
     "calculate_type_curve_statistics",
     # EOR
     "WaterfloodPatternResult",
+    "predict_pattern_flood_performance",
     "calculate_mobility_ratio",
     "calculate_areal_sweep_efficiency",
     "calculate_displacement_efficiency",
@@ -281,6 +318,8 @@ __all__ = [
     # Multi-Well
     "DrainageVolume",
     "MultiWellInteraction",
+    "analyze_five_spot_pattern",
+    "analyze_nine_spot_pattern",
     "calculate_drainage_volume",
     "calculate_drainage_overlap_matrix",
     "analyze_drainage_volumes",
@@ -309,6 +348,21 @@ __all__ = [
     "INTERNAL_RATE_UNIT",
     "convert_decline_rate",
     "validate_units",
+    # Pressure Normalization
+    "calculate_pseudopressure",
+    "normalize_cumulative_with_pressure",
+    "normalize_for_type_curve_matching",
+    "normalize_rate_with_pressure",
+    # Relative Permeability
+    "apply_hysteresis_to_relative_permeability",
+    "calculate_capillary_pressure",
+    "calculate_oil_water_relative_permeability",
+    "calculate_three_phase_relative_permeability",
+    "corey_relative_permeability",
+    "let_relative_permeability",
+    "van_genuchten_capillary_pressure",
+    "van_genuchten_effective_saturation",
+    "van_genuchten_m_from_n",
     # Physics-informed
     "MaterialBalanceDecline",
     "PressureDeclineModel",

@@ -96,7 +96,7 @@ def test_check_continuity():
 def test_segmented_decline_model_fit():
     """Test fitting segmented decline model."""
     # Generate synthetic data with two segments
-    time_index = pd.date_range("2020-01-01", periods=24, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=24, freq="ME")
     t = np.arange(24)
 
     # First segment: hyperbolic
@@ -131,7 +131,7 @@ def test_segmented_decline_model_fit():
 def test_segmented_decline_model_predict():
     """Test predicting from segmented decline model."""
     # Generate synthetic data
-    time_index = pd.date_range("2020-01-01", periods=12, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=12, freq="ME")
     t = np.arange(12)
     q = 100.0 / (1.0 + 0.6 * 0.15 * t) ** (1.0 / 0.6)
     data = pd.DataFrame({"oil": q}, index=time_index)
@@ -145,7 +145,7 @@ def test_segmented_decline_model_predict():
 
     from ressmith.objects.domain import ForecastSpec
 
-    forecast_spec = ForecastSpec(horizon=12, frequency="M")
+    forecast_spec = ForecastSpec(horizon=12, frequency="ME")
     forecast = fitted_model.predict(forecast_spec)
 
     assert len(forecast.yhat) == 12

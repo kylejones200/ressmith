@@ -25,7 +25,7 @@ def main():
     except FileNotFoundError:
         print("Forecast file not found. Generating synthetic forecast...")
         # Generate a simple forecast
-        time_index = pd.date_range("2020-01-01", periods=24, freq="M")
+        time_index = pd.date_range("2020-01-01", periods=24, freq="ME")
         yhat = pd.Series(
             [100.0 - i * 2.0 for i in range(24)], index=time_index, name="forecast"
         )

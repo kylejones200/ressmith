@@ -205,6 +205,3 @@ def predict_waterflood_performance(
     )
 
     return pd.DataFrame(performance)
-
-
-

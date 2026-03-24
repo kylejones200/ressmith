@@ -217,6 +217,7 @@ def generate_capillary_pressure_curve(
     lambda_parameter: float = 2.0,
     saturation_irreducible: float = 0.2,
     method: str = "brooks_corey",
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """Generate capillary pressure curve.
 
@@ -232,6 +233,9 @@ def generate_capillary_pressure_curve(
         Irreducible saturation (fraction)
     method : str
         Method ('brooks_corey' or 'van_genuchten')
+    **kwargs
+        Passed to :func:`ressmith.primitives.relative_permeability.calculate_capillary_pressure`
+        (e.g. ``vg_alpha``, ``vg_n``, ``vg_m`` for van Genuchten).
 
     Returns
     -------
@@ -256,6 +260,7 @@ def generate_capillary_pressure_curve(
         lambda_parameter=lambda_parameter,
         saturation_irreducible=saturation_irreducible,
         method=method,
+        **kwargs,
     )
 
     return pd.DataFrame({"saturation": saturation, "capillary_pressure": Pc})

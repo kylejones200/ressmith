@@ -12,12 +12,21 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import DeclineSpec, ForecastResult, ForecastSpec, ProductionSeries, RateSeries
+from ressmith.objects.domain import (
+    DeclineSpec,
+    ForecastResult,
+    ForecastSpec,
+    ProductionSeries,
+    RateSeries,
+)
 from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.data_utils import extract_rate_data
 from ressmith.primitives.fitting_utils import initial_guess_hyperbolic
 from ressmith.primitives.switch import hyperbolic_to_exponential_rate
-from ressmith.primitives.variants import fit_fixed_terminal_decline, fixed_terminal_decline_rate
+from ressmith.primitives.variants import (
+    fit_fixed_terminal_decline,
+    fixed_terminal_decline_rate,
+)
 from ressmith.utils.errors import ERR_MODEL_NOT_FITTED
 
 
@@ -304,4 +313,3 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-

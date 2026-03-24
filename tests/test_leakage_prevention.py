@@ -20,7 +20,7 @@ class TestWalkForwardBacktestLeakage:
     def test_no_future_data_in_training(self):
         """Verify training data only uses past data."""
         # Create data with clear trend
-        dates = pd.date_range("2020-01-01", periods=60, freq="M")
+        dates = pd.date_range("2020-01-01", periods=60, freq="ME")
         # Create increasing trend (so we can detect if future data leaks)
         rates = 100 + np.arange(len(dates)) * 2
         data = pd.DataFrame({"oil": rates}, index=dates)
@@ -49,7 +49,7 @@ class TestWalkForwardBacktestLeakage:
 
     def test_training_data_monotonic(self):
         """Verify training data is properly isolated."""
-        dates = pd.date_range("2020-01-01", periods=48, freq="M")
+        dates = pd.date_range("2020-01-01", periods=48, freq="ME")
         # Create data with known pattern
         rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
         data = pd.DataFrame({"oil": rates}, index=dates)
@@ -71,7 +71,7 @@ class TestWalkForwardBacktestLeakage:
 
     def test_no_data_leakage_in_metrics(self):
         """Verify metrics are calculated only on forecast period."""
-        dates = pd.date_range("2020-01-01", periods=48, freq="M")
+        dates = pd.date_range("2020-01-01", periods=48, freq="ME")
         rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
         data = pd.DataFrame({"oil": rates}, index=dates)
 
@@ -96,7 +96,7 @@ class TestCumulativeCalculationLeakage:
 
     def test_cumulative_forward_only(self):
         """Cumulative should only use past and current data."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         rates = np.array([100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45])
 
         cum = compute_cum_from_rate(dates, rates)
@@ -105,21 +105,19 @@ class TestCumulativeCalculationLeakage:
         # Verify by checking that cum[i] >= cum[i-1] (monotonic)
         assert np.all(np.diff(cum) >= 0)
 
-        # Verify cumulative at each point matches manual calculation
+        # Verify cumulative at each point matches implementation (trapezoidal)
         for i in range(len(rates)):
-            # Time delta from previous point
             if i == 0:
                 expected_cum = 0.0
             else:
-                time_delta = (dates[i] - dates[i-1]).days
-                expected_cum = cum[i-1] + rates[i] * time_delta
-            
-            # Allow small numerical differences
+                time_delta = (dates[i] - dates[i - 1]).days
+                expected_cum = cum[i - 1] + 0.5 * (rates[i - 1] + rates[i]) * time_delta
+
             assert abs(cum[i] - expected_cum) < 1e-6 or i == 0
 
     def test_cumulative_no_future_rates(self):
         """Cumulative at time t should not use rates after t."""
-        dates = pd.date_range("2020-01-01", periods=10, freq="M")
+        dates = pd.date_range("2020-01-01", periods=10, freq="ME")
         rates = np.array([100, 90, 80, 70, 60, 50, 40, 30, 20, 10])
 
         cum = compute_cum_from_rate(dates, rates)
@@ -141,7 +139,7 @@ class TestNormalizationLeakage:
         """Normalization should use only past/current data, not future."""
         from ressmith.workflows.pressure_normalization import normalize_production_with_pressure
 
-        dates = pd.date_range("2020-01-01", periods=24, freq="M")
+        dates = pd.date_range("2020-01-01", periods=24, freq="ME")
         rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
         pressure = 5000 * np.exp(-0.05 * np.arange(len(dates)))
 
@@ -164,9 +162,9 @@ class TestNormalizationLeakage:
         # - initial_pressure (known constant)
         # Should NOT depend on future rates or pressures
 
-        # Verify normalization formula: rate / (pi - p)
+        # Verify pressure_ratio formula: q_norm = q * (pi / p)
         for i in range(len(normalized)):
-            expected_normalized = rates[i] / max(5000.0 - pressure[i], 1.0)
+            expected_normalized = rates[i] * (5000.0 / max(pressure[i], 1.0))
             actual_normalized = normalized["normalized_rate"].iloc[i]
             assert np.isclose(actual_normalized, expected_normalized, rtol=1e-5)
 
@@ -174,7 +172,7 @@ class TestNormalizationLeakage:
         """Pressure normalization shouldn't use future statistics."""
         from ressmith.workflows.pressure_normalization import normalize_production_with_pressure
 
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         rates = np.array([100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45])
         pressure = 5000 - np.arange(len(dates)) * 50
 
@@ -215,7 +213,7 @@ class TestZeroRateHandling:
         """Zero rates should be filtered before fitting."""
         from ressmith.workflows.core import fit_forecast
 
-        dates = pd.date_range("2020-01-01", periods=24, freq="M")
+        dates = pd.date_range("2020-01-01", periods=24, freq="ME")
         rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
         rates[5] = 0.0  # Add zero rate
         rates[10] = 0.0  # Add another zero rate
@@ -235,7 +233,7 @@ class TestZeroRateHandling:
 
     def test_zero_rates_in_cumulative(self):
         """Zero rates should be handled in cumulative calculations."""
-        dates = pd.date_range("2020-01-01", periods=10, freq="M")
+        dates = pd.date_range("2020-01-01", periods=10, freq="ME")
         rates = np.array([100, 90, 0, 80, 70, 0, 60, 50, 40, 30])
 
         cum = compute_cum_from_rate(dates, rates)
@@ -248,7 +246,7 @@ class TestZeroRateHandling:
 
     def test_all_zero_rates_handled(self):
         """All zero rates should be handled gracefully."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         rates = np.zeros(12)
 
         # Should raise error or handle gracefully

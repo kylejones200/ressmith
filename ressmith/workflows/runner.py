@@ -124,8 +124,8 @@ class FieldScaleRunner:
     infrastructure concerns.
 
     Example:
-        >>> from decline_curve.runner import FieldScaleRunner, RunnerConfig
-        >>> from decline_curve import dca
+        >>> from ressmith.workflows.runner import FieldScaleRunner, RunnerConfig
+        >>> from ressmith.workflows.core import fit_forecast
         >>>
         >>> # Load production data
         >>> df = pd.read_csv('production_data.csv')
@@ -136,8 +136,8 @@ class FieldScaleRunner:
         >>>
         >>> # Define forecast function
         >>> def forecast_well(well_data: pd.DataFrame) -> WellResult:
-        ...     series = well_data['oil_bbl']
-        ...     forecast = dca.single_well(series, model='arps', horizon=12)
+        ...     data = well_data[['oil_bbl']].rename(columns={'oil_bbl': 'oil'})
+        ...     forecast, _ = fit_forecast(data, model_name='arps_hyperbolic', horizon=12)
         ...     return WellResult(well_id=well_data['well_id'].iloc[0], ...)
         >>>
         >>> # Run analysis
@@ -167,7 +167,9 @@ class FieldScaleRunner:
         # Add file handler if log_file specified
         if self.config.log_file:
             file_handler = logging.FileHandler(self.config.log_file)
-            file_handler.setLevel(getattr(logging, self.config.log_level.upper(), logging.INFO))
+            file_handler.setLevel(
+                getattr(logging, self.config.log_level.upper(), logging.INFO)
+            )
             logging.getLogger().addHandler(file_handler)
 
     def run(

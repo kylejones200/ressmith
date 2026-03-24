@@ -43,7 +43,7 @@ def generate_field_data(n_wells=8, n_periods=30):
     
     well_data = {}
     well_locations = []
-    base_dates = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    base_dates = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     
     for i in range(n_wells):
         well_id = f"WELL_{i+1:03d}"

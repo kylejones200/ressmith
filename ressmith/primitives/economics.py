@@ -2,7 +2,11 @@
 Economics primitives: cashflow, NPV, IRR calculations.
 """
 
+import logging
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
 import pandas as pd
 
 try:
@@ -132,8 +136,10 @@ def irr(cashflows: np.ndarray, use_scipy: bool | None = None) -> float | None:
             )
             if result.converged:
                 return result.root
-        except ValueError:
-            pass
+        except ValueError as e:
+            logger.info(
+                "IRR root_scalar failed, falling back to grid search: %s", e
+            )
 
     rates = np.linspace(-0.9, 2.0, 1000)
     npvs = [npv(cashflows, r) for r in rates]

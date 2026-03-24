@@ -34,7 +34,7 @@ from ressmith.workflows.diagnostics_plots import generate_diagnostic_plot_data
 
 def generate_synthetic_data(n_periods=36, noise_level=3.0):
     """Generate synthetic production data with hyperbolic decline."""
-    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     t = np.arange(n_periods) / 12.0  # Convert to years
     
     # Hyperbolic decline parameters

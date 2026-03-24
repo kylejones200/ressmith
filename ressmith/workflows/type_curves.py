@@ -14,8 +14,6 @@ from ressmith.primitives.type_curves import (
     calculate_type_curve_statistics,
     generate_arps_type_curve,
     match_multiple_type_curves,
-    match_type_curve,
-    normalize_production_data,
 )
 from ressmith.utils.errors import ERR_INSUFFICIENT_DATA, format_error
 
@@ -79,7 +77,11 @@ def match_type_curve_workflow(
     matches = match_multiple_type_curves(time, rate)
 
     if len(matches) == 0:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=5, analysis="type curve matching"))
+        raise ValueError(
+            format_error(
+                ERR_INSUFFICIENT_DATA, min_points=5, analysis="type curve matching"
+            )
+        )
     best_match_name = min(matches.keys(), key=lambda k: matches[k].match_error)
     best_match = matches[best_match_name]
     statistics = calculate_type_curve_statistics(best_match, time, rate)
@@ -149,4 +151,3 @@ def generate_type_curve_library(
         "curves": curves,
         "b_values": b_values.tolist(),
     }
-

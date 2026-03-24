@@ -12,7 +12,6 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-
 class ProductionInputSchema:
     """
     Stable input schema for production tables.

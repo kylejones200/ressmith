@@ -576,4 +576,3 @@ def calculate_pvt_properties(
         muw=muw,
         Z=Z,
     )
-

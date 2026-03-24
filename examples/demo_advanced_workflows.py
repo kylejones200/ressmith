@@ -29,7 +29,7 @@ from ressmith import (
 
 def generate_production_data_with_pressure(n_periods=48):
     """Generate synthetic production data with pressure."""
-    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     t = np.arange(n_periods) / 12.0  # Years
     
     # Hyperbolic decline

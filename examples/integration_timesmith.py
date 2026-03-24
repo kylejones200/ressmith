@@ -59,7 +59,7 @@ def main():
     print("=" * 50)
 
     # Generate synthetic production data
-    time_index = pd.date_range("2020-01-01", periods=24, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=24, freq="ME")
     t = np.arange(24)
     qi = 100.0
     di = 0.1

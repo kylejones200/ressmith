@@ -49,6 +49,11 @@ def fit_forecast(
     """
     logger.info(f"Starting fit_forecast with model={model_name}, horizon={horizon}")
 
+    if not isinstance(horizon, int) or horizon <= 0:
+        raise ValueError(f"horizon must be a positive integer, got {horizon!r}")
+    if data.empty or len(data) == 0:
+        raise ValueError("data must be non-empty")
+
     if model_name not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model: {model_name}")
 
@@ -141,6 +146,8 @@ def evaluate_economics(forecast: ForecastResult, spec: EconSpec) -> EconResult:
         Economics results
     """
     logger.info("Starting evaluate_economics")
+    if forecast.yhat is None or len(forecast.yhat) == 0:
+        raise ValueError("forecast.yhat must be non-empty")
     task = EconTask()
     result, summary = task.run(forecast, spec)
     logger.info(f"Completed evaluate_economics. NPV: {result.npv:.2f}")

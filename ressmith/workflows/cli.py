@@ -109,12 +109,23 @@ def main():
         sys.exit(1)
 
 
+def _resolve_input_path(input_path: str) -> Path:
+    """Resolve and validate input file path."""
+    p = Path(input_path).resolve()
+    if not p.exists():
+        raise FileNotFoundError(f"Input file not found: {p}")
+    if not p.is_file():
+        raise ValueError(f"Input path is not a file: {p}")
+    return p
+
+
 def _cmd_fit(args):
     """Handle fit command."""
-    logger.info(f"Fitting decline curve model: {args.input}")
+    input_path = _resolve_input_path(args.input)
+    logger.info(f"Fitting decline curve model: {input_path}")
 
     # Read input data
-    data = read_csv_production(args.input)
+    data = read_csv_production(input_path)
 
     # Fit model
     forecast, params = fit_forecast(
@@ -141,10 +152,11 @@ def _cmd_fit(args):
 
 def _cmd_forecast(args):
     """Handle forecast command."""
-    logger.info(f"Generating forecast: {args.input}")
+    input_path = _resolve_input_path(args.input)
+    logger.info(f"Generating forecast: {input_path}")
 
     # Read input data
-    data = read_csv_production(args.input)
+    data = read_csv_production(input_path)
 
     # Generate forecast
     forecast, params = fit_forecast(
@@ -171,10 +183,11 @@ def _cmd_forecast(args):
 
 def _cmd_batch(args):
     """Handle batch command."""
-    logger.info(f"Running batch processing: {args.input}")
+    input_path = _resolve_input_path(args.input)
+    logger.info(f"Running batch processing: {input_path}")
 
     # Read input data
-    df = pd.read_csv(args.input)
+    df = pd.read_csv(input_path)
 
     # Check required columns
     if args.well_id_col not in df.columns:
@@ -227,10 +240,11 @@ def _cmd_batch(args):
 
 def _cmd_report(args):
     """Handle report command."""
-    logger.info(f"Generating report: {args.input}")
+    input_path = _resolve_input_path(args.input)
+    logger.info(f"Generating report: {input_path}")
 
     # Read input data
-    data = read_csv_production(args.input)
+    data = read_csv_production(input_path)
 
     # Fit and forecast
     forecast, params = fit_forecast(data, model_name=args.model, horizon=args.horizon)
@@ -242,7 +256,7 @@ def _cmd_report(args):
     if args.output:
         output_path = args.output
     else:
-        well_id = args.well_id or Path(args.input).stem
+        well_id = args.well_id or input_path.stem
         ext = "html" if args.format == "html" else "pdf"
         output_path = f"{well_id}_report.{ext}"
 

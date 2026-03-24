@@ -10,7 +10,7 @@ from ressmith.workflows.ensemble import ensemble_forecast
 @pytest.fixture
 def synthetic_data():
     """Create synthetic production data."""
-    dates = pd.date_range("2020-01-01", periods=24, freq="M")
+    dates = pd.date_range("2020-01-01", periods=24, freq="ME")
     t = np.arange(len(dates))
     rates = 100 * np.exp(-0.1 * t) + np.random.normal(0, 2, size=len(t))
     rates = np.maximum(rates, 1.0)

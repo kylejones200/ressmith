@@ -10,10 +10,6 @@ References:
 
 import logging
 from dataclasses import dataclass
-from typing import Any
-
-import numpy as np
-from scipy.optimize import linprog, minimize
 
 logger = logging.getLogger(__name__)
 
@@ -131,17 +127,11 @@ def allocate_production_optimal(
     # Apply per-well constraints
     for well_id in well_ids:
         if constraints.max_well_rate is not None:
-            allocations[well_id] = min(
-                allocations[well_id], constraints.max_well_rate
-            )
+            allocations[well_id] = min(allocations[well_id], constraints.max_well_rate)
         if constraints.min_well_rate is not None:
-            allocations[well_id] = max(
-                allocations[well_id], constraints.min_well_rate
-            )
+            allocations[well_id] = max(allocations[well_id], constraints.min_well_rate)
         # Don't exceed capacity
-        allocations[well_id] = min(
-            allocations[well_id], well_capacities[well_id]
-        )
+        allocations[well_id] = min(allocations[well_id], well_capacities[well_id])
 
     return allocations
 
@@ -202,9 +192,7 @@ def optimize_production_allocation(
                 allocations[well_id] = max(
                     allocations[well_id], constraints.min_well_rate
                 )
-            allocations[well_id] = min(
-                allocations[well_id], well_capacities[well_id]
-            )
+            allocations[well_id] = min(allocations[well_id], well_capacities[well_id])
 
     total_allocated = sum(allocations.values())
     facility_utilization = (
@@ -285,4 +273,3 @@ def apply_facility_constraints(
             }
 
     return constrained_rates
-

@@ -91,7 +91,9 @@ def benchmark_fit_forecast(
                 _ = fit_forecast(well_df, model_name=model_name, horizon=horizon)
                 successful_wells += 1
             except Exception as e:
-                errors.append(f"{well_id}: {str(e)}")
+                err_msg = f"{well_id}: {str(e)}"
+                errors.append(err_msg)
+                logger.warning("Benchmark fit_forecast failed for well %s: %s", well_id, e)
 
         elapsed_time = time.time() - start_time
         success_rate = (successful_wells / n_wells * 100) if n_wells > 0 else 0
@@ -99,6 +101,7 @@ def benchmark_fit_forecast(
     except Exception as e:
         elapsed_time = time.time() - start_time
         errors.append(str(e))
+        logger.warning("Benchmark fit_forecast failed with outer exception: %s", e)
         successful_wells = 0
         success_rate = 0.0
 
@@ -155,7 +158,9 @@ def benchmark_eur_calculation(
                 _ = estimate_eur(well_df)
                 successful_wells += 1
             except Exception as e:
-                errors.append(f"{well_id}: {str(e)}")
+                err_msg = f"{well_id}: {str(e)}"
+                errors.append(err_msg)
+                logger.warning("Benchmark estimate_eur failed for well %s: %s", well_id, e)
 
         elapsed_time = time.time() - start_time
         success_rate = (successful_wells / n_wells * 100) if n_wells > 0 else 0
@@ -163,6 +168,7 @@ def benchmark_eur_calculation(
     except Exception as e:
         elapsed_time = time.time() - start_time
         errors.append(str(e))
+        logger.warning("Benchmark estimate_eur failed with outer exception: %s", e)
         successful_wells = 0
         success_rate = 0.0
 
@@ -205,12 +211,14 @@ def benchmark_single_well(
     # Prepare data
     data = pd.DataFrame({"oil": production})
 
+    failed = 0
     for _ in range(n_iterations):
         start = time.time()
         try:
             _ = fit_forecast(data, model_name=model_name, horizon=horizon)
-        except Exception:
-            pass
+        except Exception as e:
+            failed += 1
+            logger.warning("Benchmark iteration failed: %s", e)
         elapsed = time.time() - start
         times.append(elapsed)
 
@@ -221,6 +229,7 @@ def benchmark_single_well(
         "max_time": np.max(times),
         "median_time": np.median(times),
         "throughput_per_sec": 1.0 / np.mean(times) if np.mean(times) > 0 else 0,
+        "failed_iterations": failed,
     }
 
 

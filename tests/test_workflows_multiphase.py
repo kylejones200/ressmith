@@ -10,7 +10,7 @@ from ressmith.workflows.multiphase import forecast_with_yields
 @pytest.fixture
 def multiphase_data():
     """Create synthetic multi-phase production data."""
-    dates = pd.date_range("2020-01-01", periods=36, freq="M")
+    dates = pd.date_range("2020-01-01", periods=36, freq="ME")
     # Oil decline
     t = np.arange(len(dates))
     oil = 100 * np.exp(-0.1 * t) + np.random.normal(0, 2, size=len(t))

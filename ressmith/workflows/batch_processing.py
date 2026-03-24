@@ -187,7 +187,9 @@ def batch_fit(
     output_file = output_path / "batch_results.parquet"
     df_results.to_parquet(output_file, index=False)
 
-    n_successful = int(df_results["success"].sum()) if "success" in df_results.columns else 0
+    n_successful = (
+        int(df_results["success"].sum()) if "success" in df_results.columns else 0
+    )
     logger.info(
         f"Batch fit complete: {n_successful}/{len(df_results)} successful",
         extra={

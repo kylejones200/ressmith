@@ -185,7 +185,9 @@ class MaterialBalanceDecline(BaseDeclineModel):
                     gas_gravity=params.get("gas_gravity", 0.65),
                     temperature=params.get("temperature", 200.0),
                 )
-                _ = solution_gas_drive_material_balance(p_i, Np_i, mb_params)  # noqa: F841
+                _ = solution_gas_drive_material_balance(
+                    p_i, Np_i, mb_params
+                )  # noqa: F841
                 if i > 0:
                     dNp = Np_i - Np[i - 1]
                     dt = t_i - t[i - 1] if t_i > t[i - 1] else 1.0
@@ -542,7 +544,7 @@ def load_reservoir_simulation(
         DataFrame with simulation results (pressure, rates, etc.)
 
     Example:
-        >>> from decline_curve.physics_informed import load_reservoir_simulation
+        >>> from ressmith.primitives.physics_informed import load_reservoir_simulation
         >>> sim_data = load_reservoir_simulation('eclipse_output.csv')
         >>> pressure = sim_data['pressure']
         >>> oil_rate = sim_data['oil_rate']
@@ -623,7 +625,7 @@ def compare_dca_with_simulation(
         DataFrame with comparison metrics and aligned data
 
     Example:
-        >>> from decline_curve.physics_informed import compare_dca_with_simulation
+        >>> from ressmith.primitives.physics_informed import compare_dca_with_simulation
         >>> comparison = compare_dca_with_simulation(dca_forecast, sim_data)
         >>> print(comparison[['dca_forecast', 'simulation', 'difference']])
     """
@@ -748,8 +750,8 @@ def material_balance_forecast(
                 "D": params["di"],
                 "N": 1e6,
             }
-        except Exception:
-            # Ultimate fallback
+        except Exception as e:
+            logger.warning("ARPS fallback fitting failed, using initial params: %s", e)
             fit_result.params = initial_params
 
     # Generate forecast
@@ -835,8 +837,8 @@ def pressure_decline_forecast(
         )
         initial_params["pi"] = popt[0]
         initial_params["D"] = popt[1]
-    except Exception:
-        logger.warning("Pressure fitting failed, using initial guess")
+    except Exception as e:
+        logger.warning("Pressure fitting failed, using initial guess: %s", e)
 
     # Generate forecast
     last_date = dates[-1]

@@ -7,10 +7,22 @@ This package contains all decline curve model classes, organized by type:
 - segmented: Segmented decline model
 """
 
-from ressmith.primitives.models.arps import ArpsExponentialModel, ArpsHarmonicModel, ArpsHyperbolicModel
-from ressmith.primitives.models.advanced import DuongModel, PowerLawDeclineModel, StretchedExponentialModel
+from ressmith.primitives.models.advanced import (
+    DuongModel,
+    PowerLawDeclineModel,
+    StretchedExponentialModel,
+)
+from ressmith.primitives.models.arps import (
+    ArpsExponentialModel,
+    ArpsHarmonicModel,
+    ArpsHyperbolicModel,
+)
 from ressmith.primitives.models.segmented import SegmentedDeclineModel
-from ressmith.primitives.models.variants import FixedTerminalDeclineModel, HyperbolicToExponentialSwitchModel, LinearDeclineModel
+from ressmith.primitives.models.variants import (
+    FixedTerminalDeclineModel,
+    HyperbolicToExponentialSwitchModel,
+    LinearDeclineModel,
+)
 
 __all__ = [
     # ARPS models
@@ -43,6 +55,3 @@ MODEL_REGISTRY = {
     "stretched_exponential": StretchedExponentialModel,
     "fixed_terminal_decline": FixedTerminalDeclineModel,
 }
-
-
-

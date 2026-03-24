@@ -34,7 +34,7 @@ def test_timesmith_typing_import():
 def test_validate_series_like_with_ressmith():
     """Test that timesmith validators work with ressmith inputs."""
     # Create a valid pandas Series
-    time_index = pd.date_range("2020-01-01", periods=12, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=12, freq="ME")
     values = np.array([100.0 - i * 2.0 for i in range(12)])
     series = pd.Series(values, index=time_index, name="oil")
 

@@ -16,7 +16,7 @@ def generate_synthetic_segmented(
     n_periods: int = 36,
 ) -> pd.DataFrame:
     """Generate synthetic data with two decline segments."""
-    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     t = np.arange(n_periods)
 
     # First segment: hyperbolic decline (0-12 months)

@@ -24,7 +24,7 @@ from ressmith import fit_forecast
 # Load production data
 data = pd.DataFrame({
     'oil': [100, 95, 90, 85, 80],
-}, index=pd.date_range('2020-01-01', periods=5, freq='M'))
+}, index=pd.date_range('2020-01-01', periods=5, freq='ME'))
 
 # Fit and forecast
 forecast, params = fit_forecast(

@@ -11,10 +11,27 @@ from typing import Any
 
 import pandas as pd
 
-from ressmith.objects.domain import DeclineSpec, ForecastResult, ForecastSpec, ProductionSeries, RateSeries
-from ressmith.primitives.advanced_decline import duong_rate, fit_duong, fit_power_law, fit_stretched_exponential, power_law_rate, stretched_exponential_rate
+from ressmith.objects.domain import (
+    DeclineSpec,
+    ForecastResult,
+    ForecastSpec,
+    ProductionSeries,
+    RateSeries,
+)
+from ressmith.primitives.advanced_decline import (
+    duong_rate,
+    fit_duong,
+    fit_power_law,
+    fit_stretched_exponential,
+    power_law_rate,
+    stretched_exponential_rate,
+)
 from ressmith.primitives.base import BaseDeclineModel
-from ressmith.primitives.constraints import clip_parameters, get_default_bounds, validate_parameters
+from ressmith.primitives.constraints import (
+    clip_parameters,
+    get_default_bounds,
+    validate_parameters,
+)
 from ressmith.primitives.data_utils import extract_rate_data
 from ressmith.utils.errors import ERR_MODEL_NOT_FITTED
 
@@ -233,4 +250,3 @@ class StretchedExponentialModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-

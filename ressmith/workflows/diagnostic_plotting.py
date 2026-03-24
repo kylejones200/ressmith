@@ -373,14 +373,18 @@ def generate_all_diagnostic_plots(
     if fig_linear is not None:
         plots["linear_flow"] = (fig_linear, ax_linear)
         if save_path:
-            fig_linear.savefig(f"{save_path}_linear_flow.png", dpi=300, bbox_inches="tight")
+            fig_linear.savefig(
+                f"{save_path}_linear_flow.png", dpi=300, bbox_inches="tight"
+            )
 
     # Boundary-dominated flow plot
     fig_bdf, ax_bdf = plot_boundary_dominated_flow(time, rate, cumulative, **kwargs)
     if fig_bdf is not None:
         plots["boundary_dominated"] = (fig_bdf, ax_bdf)
         if save_path:
-            fig_bdf.savefig(f"{save_path}_boundary_dominated.png", dpi=300, bbox_inches="tight")
+            fig_bdf.savefig(
+                f"{save_path}_boundary_dominated.png", dpi=300, bbox_inches="tight"
+            )
 
     logger.info(f"Generated {len(plots)} diagnostic plots")
     return plots

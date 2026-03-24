@@ -4,9 +4,12 @@ Uncertainty quantification for decline curve forecasts.
 Provides Monte Carlo simulation and probabilistic forecasting capabilities.
 """
 
+import logging
 from typing import Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 import pandas as pd
 
 from ressmith.objects.domain import ForecastResult, ForecastSpec
@@ -114,7 +117,8 @@ def monte_carlo_forecast(
         try:
             sample_forecast = temp_model.predict(spec)
             forecast_samples.append(sample_forecast.yhat.values)
-        except Exception:
+        except Exception as e:
+            logger.warning("Sample forecast failed, using base forecast: %s", e)
             forecast_samples.append(base_forecast.yhat.values)
 
     forecast_samples = np.array(forecast_samples)

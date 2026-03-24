@@ -98,7 +98,7 @@ class ForecastSpec:
     """Forecast specification."""
 
     horizon: int  # Number of periods
-    frequency: str  # Pandas frequency string, e.g., 'D', 'M'
+    frequency: str  # Pandas frequency string, e.g., 'D', 'ME' (month-end)
     scenarios: dict[str, Any] | None = None
 
 

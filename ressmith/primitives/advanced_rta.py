@@ -114,7 +114,9 @@ def generate_blasingame_type_curve(
     """
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="Blasingame"))
+        raise ValueError(
+            format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="Blasingame")
+        )
 
     time_valid = time[valid_mask]
     rate_valid = rate[valid_mask]
@@ -188,9 +190,10 @@ def generate_fmb_type_curve(
     # Filter valid data
     valid_mask = (cumulative > 0) & (pressure > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="FMB"))
+        raise ValueError(
+            format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="FMB")
+        )
 
-    time_valid = time[valid_mask]
     cumulative_valid = cumulative[valid_mask]
     pressure_valid = pressure[valid_mask]
 
@@ -198,7 +201,9 @@ def generate_fmb_type_curve(
     normalized_pressure = pressure_drop / initial_pressure
 
     max_cumulative = np.max(cumulative_valid)
-    normalized_cumulative = cumulative_valid / max_cumulative if max_cumulative > 0 else cumulative_valid
+    normalized_cumulative = (
+        cumulative_valid / max_cumulative if max_cumulative > 0 else cumulative_valid
+    )
 
     if len(cumulative_valid) >= 3:
         coeffs = np.polyfit(normalized_cumulative, normalized_pressure, 1)
@@ -247,7 +252,9 @@ def analyze_complex_fracture_network(
     """
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="fracture"))
+        raise ValueError(
+            format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="fracture")
+        )
 
     time_valid = time[valid_mask]
     rate_valid = rate[valid_mask]
@@ -265,7 +272,9 @@ def analyze_complex_fracture_network(
 
     # xf ≈ sqrt(SRV / (h * n_stages))
     reservoir_thickness = 50.0
-    effective_half_length = np.sqrt(srv * 43560.0 / (reservoir_thickness * number_of_stages))
+    effective_half_length = np.sqrt(
+        srv * 43560.0 / (reservoir_thickness * number_of_stages)
+    )
     effective_half_length = max(10.0, min(5000.0, effective_half_length))
 
     return {
@@ -310,7 +319,9 @@ def generate_dn_type_curve(
     """
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="DN type curve"))
+        raise ValueError(
+            format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="DN type curve")
+        )
 
     time_valid = time[valid_mask]
     rate_valid = rate[valid_mask]
@@ -320,7 +331,8 @@ def generate_dn_type_curve(
         duong_params = fit_duong(time_valid, rate_valid)
         duong_a = duong_params.get("a", 0.1)
         duong_m = duong_params.get("m", 0.5)
-    except Exception:
+    except Exception as e:
+        logger.warning("Duong fitting failed, using defaults (a=0.1, m=0.5): %s", e)
         duong_a = 0.1
         duong_m = 0.5
 
@@ -364,4 +376,3 @@ def generate_dn_type_curve(
         duong_m=float(duong_m),
         estimated_srv=float(estimated_srv),
     )
-

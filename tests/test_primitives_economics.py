@@ -11,7 +11,7 @@ from ressmith.primitives.economics import cashflow_from_forecast, npv
 def test_cashflow_from_forecast():
     """Test cashflow computation from forecast."""
     # Create simple forecast
-    time_index = pd.date_range("2020-01-01", periods=12, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=12, freq="ME")
     yhat = pd.Series([100.0] * 12, index=time_index, name="forecast")
     forecast = ForecastResult(yhat=yhat)
 

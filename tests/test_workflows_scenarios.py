@@ -11,7 +11,7 @@ from ressmith.workflows.scenarios import evaluate_scenarios, scenario_summary
 @pytest.fixture
 def sample_forecast():
     """Create a sample forecast for testing."""
-    dates = pd.date_range("2020-01-01", periods=24, freq="M")
+    dates = pd.date_range("2020-01-01", periods=24, freq="ME")
     rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
     yhat = pd.Series(rates, index=dates, name="forecast")
     return ForecastResult(yhat=yhat, metadata={})

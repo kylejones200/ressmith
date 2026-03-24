@@ -28,7 +28,7 @@ from ressmith.workflows.forecast_statistical import calculate_confidence_interva
 
 def generate_synthetic_data(n_periods=36, noise_level=5.0):
     """Generate synthetic production data."""
-    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    time_index = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     t = np.arange(n_periods) / 12.0  # Years
     
     # Hyperbolic decline

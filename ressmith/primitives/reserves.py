@@ -4,7 +4,11 @@ EUR (Estimated Ultimate Recovery) estimation primitives.
 Layer 2 primitives for calculating EUR from decline curves.
 """
 
+import logging
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_eur_exponential(
@@ -189,7 +193,9 @@ def calculate_eur_from_params(
     Returns
     -------
     float or None
-        Estimated Ultimate Recovery, or None if calculation fails
+        Estimated Ultimate Recovery, or None if calculation fails.
+        None is returned when params are invalid (qi<=0, di<=0) or an
+        exception occurs during calculation. Failures are logged at warning level.
     """
     try:
         qi = params.get("qi", 0.0)
@@ -212,5 +218,11 @@ def calculate_eur_from_params(
             # Unknown model, use exponential as default
             return calculate_eur_exponential(qi, di, t_max, econ_limit)
 
-    except Exception:
+    except Exception as e:
+        logger.warning(
+            "EUR calculation failed: %s. params=%s, model_name=%s",
+            e,
+            params,
+            model_name,
+        )
         return None

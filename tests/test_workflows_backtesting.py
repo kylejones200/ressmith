@@ -10,7 +10,7 @@ from ressmith.workflows.backtesting import walk_forward_backtest
 @pytest.fixture
 def synthetic_historical_data():
     """Create synthetic historical production data."""
-    dates = pd.date_range("2020-01-01", periods=48, freq="M")
+    dates = pd.date_range("2020-01-01", periods=48, freq="ME")
     # Create declining rates with some noise
     t = np.arange(len(dates))
     rates = 100 * np.exp(-0.1 * t) + np.random.normal(0, 2, size=len(t))

@@ -6,10 +6,9 @@ Provides workflows for optimizing ESP, gas lift, and rod pump systems.
 import logging
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from ressmith.primitives.vlp import optimize_artificial_lift, perform_nodal_analysis
+from ressmith.primitives.vlp import perform_nodal_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +146,9 @@ def optimize_gas_lift_system(
     # Estimate gas injection rate
     # Simplified: gas rate ≈ 0.5 * oil rate for typical gas lift
     gas_injection_rate = operating_rate * 0.5  # MCF/day
-    gas_liquid_ratio = gas_injection_rate / operating_rate if operating_rate > 0 else 0.0
+    gas_liquid_ratio = (
+        gas_injection_rate / operating_rate if operating_rate > 0 else 0.0
+    )
 
     return {
         "operating_rate": float(operating_rate),

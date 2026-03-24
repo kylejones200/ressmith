@@ -17,6 +17,3 @@ __all__ = [
     "ERR_UNSUPPORTED_FORMAT",
     "format_error",
 ]
-
-
-

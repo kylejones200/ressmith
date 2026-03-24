@@ -11,7 +11,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ressmith.utils.errors import ERR_NO_COMMON_TIME_INDEX, ERR_UNSUPPORTED_FORMAT, format_error
+from ressmith.utils.errors import (
+    ERR_NO_COMMON_TIME_INDEX,
+    ERR_UNSUPPORTED_FORMAT,
+    format_error,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +87,9 @@ def export_for_simulator(
             json.dump(export_dict, f, indent=2, default=str)
 
     else:
-        raise ValueError(format_error(ERR_UNSUPPORTED_FORMAT, format=format, supported="csv, json"))
+        raise ValueError(
+            format_error(ERR_UNSUPPORTED_FORMAT, format=format, supported="csv, json")
+        )
 
     logger.info(f"Exported data to {output_path}")
 
@@ -121,7 +127,9 @@ def import_simulation_results(
     """
     logger.info(f"Importing simulation results: format={format}")
 
-    file_path = Path(file_path)
+    file_path = Path(file_path).resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
 
     if format == "csv":
         df = pd.read_csv(file_path, index_col=0, parse_dates=True)
@@ -139,7 +147,7 @@ def import_simulation_results(
     elif format == "json":
         import json
 
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
 
         production_data = pd.DataFrame(data["production"]).T
@@ -156,7 +164,9 @@ def import_simulation_results(
             results["metadata"] = data["metadata"]
 
     else:
-        raise ValueError(format_error(ERR_UNSUPPORTED_FORMAT, format=format, supported="csv, json"))
+        raise ValueError(
+            format_error(ERR_UNSUPPORTED_FORMAT, format=format, supported="csv, json")
+        )
 
     logger.info(f"Imported simulation results from {file_path}")
     return results
@@ -284,7 +294,11 @@ def export_simulator_input(
                 oil = row.get("oil", 0.0)
                 gas = row.get("gas", 0.0)
                 water = row.get("water", 0.0)
-                date_str = date.strftime("%d-%m-%Y") if hasattr(date, "strftime") else str(date)
+                date_str = (
+                    date.strftime("%d-%m-%Y")
+                    if hasattr(date, "strftime")
+                    else str(date)
+                )
                 f.write(f"{date_str:12s} {oil:10.2f} {gas:10.2f} {water:10.2f}\n")
 
         elif format == "cmg":
@@ -346,7 +360,9 @@ def import_simulator_output(
     """
     logger.info(f"Importing simulator output: format={format}")
 
-    file_path = Path(file_path)
+    file_path = Path(file_path).resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
 
     if format == "csv" or file_path.suffix == ".csv":
         # CSV format
@@ -358,8 +374,11 @@ def import_simulator_output(
         try:
             df = pd.read_csv(file_path, index_col=0, parse_dates=True)
             return {"production": df}
-        except Exception:
-            logger.warning(f"Could not parse {format} format, returning empty results")
+        except Exception as e:
+            logger.warning(
+                "Could not parse %s format, returning empty results: %s",
+                format,
+                e,
+                exc_info=True,
+            )
             return {"production": pd.DataFrame()}
-
-

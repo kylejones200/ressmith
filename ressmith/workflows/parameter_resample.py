@@ -71,7 +71,7 @@ def fast_arps_resample(
 
     Example:
         >>> import pandas as pd
-        >>> from decline_curve.parameter_resample import fast_arps_resample
+        >>> from ressmith.workflows.parameter_resample import fast_arps_resample
         >>> dates = pd.date_range('2020-01-01', periods=24, freq='MS')
         >>> production = pd.Series([...], index=dates)
         >>> draws = fast_arps_resample(production, kind='hyperbolic', n_draws=1000)
@@ -121,12 +121,8 @@ def fast_arps_resample(
     else:
         raise ValueError(f"Unknown method: {method}")
 
-    qi_samples = np.random.lognormal(
-        np.log(max(qi, 1e-6)), qi_std / qi, n_draws
-    )
-    di_samples = np.random.lognormal(
-        np.log(max(di, 1e-6)), di_std / di, n_draws
-    )
+    qi_samples = np.random.lognormal(np.log(max(qi, 1e-6)), qi_std / qi, n_draws)
+    di_samples = np.random.lognormal(np.log(max(di, 1e-6)), di_std / di, n_draws)
 
     if kind == "hyperbolic":
         # b-factor: use truncated normal (0 to 2)
@@ -149,7 +145,9 @@ def fast_arps_resample(
             elif kind == "harmonic":
                 forecast = arps_harmonic(t_full, qi_samples[i], di_samples[i])
             else:  # hyperbolic
-                forecast = arps_hyperbolic(t_full, qi_samples[i], di_samples[i], b_samples[i])
+                forecast = arps_hyperbolic(
+                    t_full, qi_samples[i], di_samples[i], b_samples[i]
+                )
             draws[i] = forecast
         except Exception as e:
             logger.warning(f"Failed to generate forecast for sample {i}: {e}")

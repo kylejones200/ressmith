@@ -111,14 +111,7 @@ def estimate_drainage_radius(
         ...     production_time=365
         ... )
     """
-    # Convert permeability to darcy
-    k_darcy = permeability / 1000.0
-
-    # Radius of investigation (feet)
-    # r_inv ≈ sqrt(k * t / (φ * μ * ct))
-    r_inv = np.sqrt(
-        k_darcy * production_time / (porosity * viscosity * total_compressibility)
-    )
+    # Radius of investigation (feet): r_inv ≈ sqrt(k * t / (φ * μ * ct))
 
     r_inv_ft = np.sqrt(
         (permeability * production_time)
@@ -282,9 +275,7 @@ def analyze_well_interference(
 
     if distance < (drainage_radius_1 + drainage_radius_2):
         overlap_area = (
-            np.pi
-            * min(drainage_radius_1, drainage_radius_2) ** 2
-            * interference_factor
+            np.pi * min(drainage_radius_1, drainage_radius_2) ** 2 * interference_factor
         )
         drainage_overlap = overlap_area / avg_area if avg_area > 0 else 0.0
     else:
@@ -471,7 +462,9 @@ def optimize_spacing_from_eur(
     avg_radius = np.mean(list(drainage_radii.values()))
 
     # Target interference factor to achieve target EUR loss
-    target_interference = target_eur_loss_percent / (100.0 * 0.6)  # Reverse of EUR interference model
+    target_interference = target_eur_loss_percent / (
+        100.0 * 0.6
+    )  # Reverse of EUR interference model
 
     # Estimate spacing from interference model
     # For two equal circles: interference = f(distance / radius)
@@ -496,15 +489,19 @@ def optimize_spacing_from_eur(
                     eur_1, eur_2, distance, r1, r2
                 )
 
-                spacing_analysis.append({
-                    "well_id_1": well_id_1,
-                    "well_id_2": well_id_2,
-                    "distance": float(distance),
-                    "eur_1": float(eur_1),
-                    "eur_2": float(eur_2),
-                    "eur_interference_factor": eur_interference["eur_interference_factor"],
-                    "total_eur_loss": eur_interference["total_eur_loss"],
-                })
+                spacing_analysis.append(
+                    {
+                        "well_id_1": well_id_1,
+                        "well_id_2": well_id_2,
+                        "distance": float(distance),
+                        "eur_1": float(eur_1),
+                        "eur_2": float(eur_2),
+                        "eur_interference_factor": eur_interference[
+                            "eur_interference_factor"
+                        ],
+                        "total_eur_loss": eur_interference["total_eur_loss"],
+                    }
+                )
 
     # Calculate expected EUR loss at recommended spacing
     avg_r1 = avg_radius
@@ -524,4 +521,3 @@ def optimize_spacing_from_eur(
         "expected_eur_loss_percent": float(expected_eur_loss_percent),
         "spacing_analysis": spacing_analysis,
     }
-

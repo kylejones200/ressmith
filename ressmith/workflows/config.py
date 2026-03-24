@@ -365,7 +365,7 @@ class BatchJobConfig:
             BatchJobConfig instance
 
         Example:
-            >>> from decline_curve.config import BatchJobConfig
+            >>> from ressmith.workflows.config import BatchJobConfig
             >>> config = BatchJobConfig.from_toml('config.toml')
         """
         if not TOML_AVAILABLE:
@@ -399,7 +399,7 @@ class BatchJobConfig:
             BatchJobConfig instance
 
         Example:
-            >>> from decline_curve.config import BatchJobConfig
+            >>> from ressmith.workflows.config import BatchJobConfig
             >>> config = BatchJobConfig.from_yaml('config.yaml')
         """
         if not YAML_AVAILABLE:
@@ -497,7 +497,7 @@ def create_example_config(output_path: str | Path, format: str = "toml") -> None
         format: Configuration format ('toml' or 'yaml')
 
     Example:
-        >>> from decline_curve.config import create_example_config
+        >>> from ressmith.workflows.config import create_example_config
         >>> create_example_config('example_config.toml')
     """
     example_config = {

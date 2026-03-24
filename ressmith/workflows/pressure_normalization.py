@@ -12,7 +12,6 @@ import pandas as pd
 
 from ressmith.primitives.pressure_normalization import (
     calculate_pseudopressure,
-    normalize_cumulative_with_pressure,
     normalize_for_type_curve_matching,
     normalize_rate_with_pressure,
 )
@@ -71,7 +70,9 @@ def normalize_production_with_pressure(
 
     if initial_pressure is None:
         initial_pressure = float(pressure[0])
-        logger.info(f"Using first pressure value as initial: {initial_pressure:.1f} psi")
+        logger.info(
+            f"Using first pressure value as initial: {initial_pressure:.1f} psi"
+        )
 
     # Normalize rate
     normalized_rate = normalize_rate_with_pressure(
@@ -154,7 +155,9 @@ def normalize_for_rta_analysis(
             if initial_pressure is None:
                 initial_pressure = float(pressure[0])
         else:
-            logger.warning(f"Pressure column '{pressure_col}' not found, skipping pressure normalization")
+            logger.warning(
+                f"Pressure column '{pressure_col}' not found, skipping pressure normalization"
+            )
 
     # Extract cumulative
     cumulative = None

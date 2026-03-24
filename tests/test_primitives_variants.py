@@ -15,7 +15,7 @@ from ressmith.primitives.variants import (
 @pytest.fixture
 def synthetic_declining_data():
     """Create synthetic declining production data."""
-    dates = pd.date_range("2020-01-01", periods=36, freq="M")
+    dates = pd.date_range("2020-01-01", periods=36, freq="ME")
     t = np.arange(len(dates))
     # Hyperbolic decline
     qi, di, b = 100.0, 0.3, 0.7
@@ -85,7 +85,7 @@ def test_fixed_terminal_decline_model_predict(synthetic_declining_data):
     )
     fitted = model.fit(synthetic_declining_data)
 
-    spec = ForecastSpec(horizon=120, frequency="M")
+    spec = ForecastSpec(horizon=120, frequency="ME")
     forecast = fitted.predict(spec)
 
     assert len(forecast.yhat) == 120

@@ -14,12 +14,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from scipy.optimize import minimize
 
 from ressmith.primitives.interference import (
     calculate_interference_factor,
     calculate_well_distance,
-    estimate_drainage_radius,
 )
 
 logger = logging.getLogger(__name__)
@@ -136,9 +134,7 @@ def calculate_drainage_overlap_matrix(
                 r1 = drainage_radii.get(well_id_1, 600.0)
                 r2 = drainage_radii.get(well_id_2, 600.0)
 
-                interference_factor = calculate_interference_factor(
-                    distance, r1, r2
-                )
+                interference_factor = calculate_interference_factor(distance, r1, r2)
 
                 # Calculate overlap area
                 min_area = np.pi * min(r1, r2) ** 2
@@ -201,9 +197,7 @@ def optimize_multi_well_spacing(
                 r1 = drainage_radii.get(well_id_1, 600.0)
                 r2 = drainage_radii.get(well_id_2, 600.0)
 
-                interference_factor = calculate_interference_factor(
-                    distance, r1, r2
-                )
+                interference_factor = calculate_interference_factor(distance, r1, r2)
                 interference_sum += interference_factor
                 n_pairs += 1
 
@@ -215,9 +209,7 @@ def optimize_multi_well_spacing(
         "recommended_spacing": float(recommended_spacing),
         "current_total_overlap": float(total_overlap),
         "average_interference": float(average_interference),
-        "overlap_matrix": {
-            f"{k[0]}_{k[1]}": v for k, v in overlaps.items()
-        },
+        "overlap_matrix": {f"{k[0]}_{k[1]}": v for k, v in overlaps.items()},
     }
 
 
@@ -254,7 +246,11 @@ def analyze_drainage_volumes(
     for well_id in well_ids:
         r_drain = drainage_radii.get(well_id, 600.0)
         volume_info = calculate_drainage_volume(
-            r_drain, reservoir_thickness, porosity, oil_saturation, formation_volume_factor
+            r_drain,
+            reservoir_thickness,
+            porosity,
+            oil_saturation,
+            formation_volume_factor,
         )
 
         volumes[well_id] = DrainageVolume(
@@ -309,9 +305,7 @@ def model_multi_well_interaction(
                 r1 = drainage_radii.get(well_id_1, 600.0)
                 r2 = drainage_radii.get(well_id_2, 600.0)
 
-                interference_result = calculate_interference_factor(
-                    distance, r1, r2
-                )
+                interference_result = calculate_interference_factor(distance, r1, r2)
                 interference_sum += interference_result
                 n_pairs += 1
 
@@ -333,14 +327,10 @@ def model_multi_well_interaction(
 
                 well_pairs.append(pair_info)
 
-    average_interference = (
-        interference_sum / n_pairs if n_pairs > 0 else 0.0
-    )
+    average_interference = interference_sum / n_pairs if n_pairs > 0 else 0.0
 
     # Spacing recommendations
-    spacing_result = optimize_multi_well_spacing(
-        well_locations, drainage_radii
-    )
+    spacing_result = optimize_multi_well_spacing(well_locations, drainage_radii)
 
     return MultiWellInteraction(
         well_pairs=well_pairs,
@@ -424,13 +414,17 @@ def analyze_five_spot_pattern(
 
     # 5-spot sweep efficiency (theoretical ~72% for ideal pattern)
     # Adjust based on spacing uniformity
-    spacing_variance = np.var(distances) / (pattern_spacing**2) if pattern_spacing > 0 else 1.0
+    spacing_variance = (
+        np.var(distances) / (pattern_spacing**2) if pattern_spacing > 0 else 1.0
+    )
     sweep_efficiency = 0.72 * (1.0 - min(0.3, spacing_variance))
 
     # Calculate interference matrix
     interference_matrix = {}
     if drainage_radii is None:
-        drainage_radii = {well_id: pattern_spacing * 0.5 for well_id in well_locations.keys()}
+        drainage_radii = {
+            well_id: pattern_spacing * 0.5 for well_id in well_locations.keys()
+        }
 
     # Injection to production interference
     inj_radius = drainage_radii.get(injection_well_id, pattern_spacing * 0.5)
@@ -534,13 +528,17 @@ def analyze_nine_spot_pattern(
                 prod_distances.append(dist)
 
     # 9-spot sweep efficiency (theoretical ~75% for ideal pattern)
-    spacing_variance = np.var(distances) / (pattern_spacing**2) if pattern_spacing > 0 else 1.0
+    spacing_variance = (
+        np.var(distances) / (pattern_spacing**2) if pattern_spacing > 0 else 1.0
+    )
     sweep_efficiency = 0.75 * (1.0 - min(0.3, spacing_variance))
 
     # Calculate interference matrix
     interference_matrix = {}
     if drainage_radii is None:
-        drainage_radii = {well_id: pattern_spacing * 0.5 for well_id in well_locations.keys()}
+        drainage_radii = {
+            well_id: pattern_spacing * 0.5 for well_id in well_locations.keys()
+        }
 
     # Injection to production interference
     inj_radius = drainage_radii.get(injection_well_id, pattern_spacing * 0.5)
@@ -576,4 +574,3 @@ def analyze_nine_spot_pattern(
         "injection_well": injection_well_id,
         "production_wells": production_well_ids,
     }
-

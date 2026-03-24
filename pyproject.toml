@@ -28,6 +28,27 @@ fit = [
 viz = [
   "matplotlib>=3.7.0",
 ]
+# DCA extras (merged from pydca/decline-curve)
+stats = [
+  "statsmodels>=0.14",
+]
+spatial = [
+  "pykrige>=1.7.0",
+  "scikit-learn>=1.3",
+]
+llm = [
+  "transformers>=4.41",
+  "torch>=2.0",
+  "accelerate>=0.29",
+  "einops>=0.7",
+]
+ml = [
+  "transformers>=4.41",
+  "torch>=2.0",
+  "accelerate>=0.29",
+  "einops>=0.7",
+  "scikit-learn>=1.3",
+]
 docs = [
   "sphinx>=7.0",
   "sphinx-rtd-theme>=2.0",
@@ -176,6 +197,9 @@ exclude = [
     "examples",
     "benchmarks",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"ressmith/primitives/ml_forecast/**" = ["N812"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]

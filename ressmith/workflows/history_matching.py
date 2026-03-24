@@ -418,11 +418,15 @@ def calculate_history_match_objective(
         elif objective_type == "nash_sutcliffe":
             # Nash-Sutcliffe efficiency
             nse = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
-            weighted_errors.append(weight * (1 - nse))  # Convert to error (lower is better)
+            weighted_errors.append(
+                weight * (1 - nse)
+            )  # Convert to error (lower is better)
         else:
             weighted_errors.append(weight * rmse)
 
-    objective_value = sum(weighted_errors) / len(weighted_errors) if weighted_errors else float("inf")
+    objective_value = (
+        sum(weighted_errors) / len(weighted_errors) if weighted_errors else float("inf")
+    )
 
     return {
         "objective_value": float(objective_value),
@@ -488,7 +492,9 @@ def run_parameter_sensitivity_analysis(
             calculated_production = N * (1 - np.exp(-D * time))
 
             # Calculate error
-            production_error = np.sqrt(np.mean((calculated_production - production) ** 2))
+            production_error = np.sqrt(
+                np.mean((calculated_production - production) ** 2)
+            )
 
             pressure_error = 0.0
             if pressure is not None:

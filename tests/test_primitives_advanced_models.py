@@ -15,7 +15,7 @@ from ressmith.primitives.models import (
 @pytest.fixture
 def synthetic_data():
     """Create synthetic decline data."""
-    dates = pd.date_range("2020-01-01", periods=24, freq="M")
+    dates = pd.date_range("2020-01-01", periods=24, freq="ME")
     # Create declining rates
     t = np.arange(len(dates))
     rates = 100 * np.exp(-0.1 * t) + np.random.normal(0, 2, size=len(t))
@@ -42,7 +42,7 @@ def test_power_law_model_predict(synthetic_data):
     model = PowerLawDeclineModel()
     fitted = model.fit(synthetic_data)
 
-    spec = ForecastSpec(horizon=12, frequency="M")
+    spec = ForecastSpec(horizon=12, frequency="ME")
     forecast = fitted.predict(spec)
 
     assert len(forecast.yhat) == 12
@@ -69,7 +69,7 @@ def test_duong_model_predict(synthetic_data):
     model = DuongModel()
     fitted = model.fit(synthetic_data)
 
-    spec = ForecastSpec(horizon=12, frequency="M")
+    spec = ForecastSpec(horizon=12, frequency="ME")
     forecast = fitted.predict(spec)
 
     assert len(forecast.yhat) == 12
@@ -96,7 +96,7 @@ def test_stretched_exponential_model_predict(synthetic_data):
     model = StretchedExponentialModel()
     fitted = model.fit(synthetic_data)
 
-    spec = ForecastSpec(horizon=12, frequency="M")
+    spec = ForecastSpec(horizon=12, frequency="ME")
     forecast = fitted.predict(spec)
 
     assert len(forecast.yhat) == 12
@@ -106,7 +106,7 @@ def test_stretched_exponential_model_predict(synthetic_data):
 
 def test_advanced_models_with_dataframe():
     """Test advanced models with DataFrame input."""
-    dates = pd.date_range("2020-01-01", periods=24, freq="M")
+    dates = pd.date_range("2020-01-01", periods=24, freq="ME")
     rates = 100 * np.exp(-0.1 * np.arange(len(dates)))
     df = pd.DataFrame({"oil": rates}, index=dates)
 

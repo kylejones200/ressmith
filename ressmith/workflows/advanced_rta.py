@@ -157,7 +157,9 @@ def analyze_fmb(
         time, cumulative, pressure, initial_pressure, formation_volume_factor
     )
 
-    logger.info(f"FMB analysis completed. Estimated OOIP: {result.estimated_ooip:.0f} STB")
+    logger.info(
+        f"FMB analysis completed. Estimated OOIP: {result.estimated_ooip:.0f} STB"
+    )
 
     return {
         "normalized_pressure": result.normalized_pressure,
@@ -226,7 +228,9 @@ def analyze_fracture_network(
         time, rate, number_of_stages, stage_spacing
     )
 
-    logger.info(f"Fracture network analysis completed. SRV: {result['estimated_srv']:.0f} acre-ft")
+    logger.info(
+        f"Fracture network analysis completed. SRV: {result['estimated_srv']:.0f} acre-ft"
+    )
 
     return result
 
@@ -368,8 +372,8 @@ def optimize_multi_stage_fracture(
 
     rate = data[rate_col].values
 
-    # Analyze current production
-    current_analysis = analyze_complex_fracture_network(
+    # Analyze current production (result available for future use)
+    _ = analyze_complex_fracture_network(
         time, rate, number_of_stages=10, stage_spacing=300.0
     )
 
@@ -408,4 +412,3 @@ def optimize_multi_stage_fracture(
         "estimated_srv": float(best_srv),
         "estimated_eur": float(estimated_eur),
     }
-

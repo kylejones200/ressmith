@@ -31,7 +31,6 @@ from ressmith.primitives.constraints import (
     validate_parameters,
 )
 from ressmith.primitives.data_utils import extract_rate_data
-from ressmith.utils.errors import ERR_MODEL_NOT_FITTED
 from ressmith.primitives.decline import (
     arps_exponential,
     arps_harmonic,
@@ -124,8 +123,6 @@ class ArpsExponentialModel(BaseDeclineModel):
         }
 
 
-
-
 class ArpsHyperbolicModel(BaseDeclineModel):
     """Hyperbolic decline model (0 < b < 1)."""
 
@@ -198,8 +195,6 @@ class ArpsHyperbolicModel(BaseDeclineModel):
         }
 
 
-
-
 class ArpsHarmonicModel(BaseDeclineModel):
     """Harmonic decline model (b=1)."""
 
@@ -269,8 +264,6 @@ class ArpsHarmonicModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-
-
 
 
 class LinearDeclineModel(BaseDeclineModel):
@@ -538,8 +531,6 @@ class SegmentedDeclineModel(BaseDeclineModel):
         }
 
 
-
-
 class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
     """
     Hyperbolic decline switching to exponential at a transition time.
@@ -639,8 +630,6 @@ class HyperbolicToExponentialSwitchModel(BaseDeclineModel):
         }
 
 
-
-
 class PowerLawDeclineModel(BaseDeclineModel):
     """Power law decline model."""
 
@@ -711,8 +700,6 @@ class PowerLawDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-
-
 
 
 class DuongModel(BaseDeclineModel):
@@ -787,8 +774,6 @@ class DuongModel(BaseDeclineModel):
         }
 
 
-
-
 class StretchedExponentialModel(BaseDeclineModel):
     """Stretched exponential decline model."""
 
@@ -859,8 +844,6 @@ class StretchedExponentialModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-
-
 
 
 class FixedTerminalDeclineModel(BaseDeclineModel):
@@ -967,8 +950,6 @@ class FixedTerminalDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-
-
 
 
 MODEL_REGISTRY = {

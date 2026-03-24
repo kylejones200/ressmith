@@ -7,10 +7,8 @@ drainage volumes, interference modeling, and spacing optimization.
 import logging
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from ressmith.primitives.interference import estimate_drainage_radius
 from ressmith.primitives.multi_well import (
     analyze_drainage_volumes,
     analyze_five_spot_pattern,
@@ -80,9 +78,9 @@ def analyze_multi_well_interaction(
             well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[
                 0
             ],
-            well_locations.loc[
-                well_locations["well_id"] == well_id, "longitude"
-            ].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[
+                0
+            ],
         )
         for well_id in well_ids
     }
@@ -124,9 +122,7 @@ def analyze_multi_well_interaction(
     )
 
     # Calculate overlap matrix
-    overlap_matrix = calculate_drainage_overlap_matrix(
-        locations_dict, drainage_radii
-    )
+    overlap_matrix = calculate_drainage_overlap_matrix(locations_dict, drainage_radii)
 
     # Spacing optimization
     spacing_opt = optimize_multi_well_spacing(locations_dict, drainage_radii)
@@ -148,9 +144,7 @@ def analyze_multi_well_interaction(
             "total_overlap": interaction.total_overlap,
             "average_interference": interaction.average_interference,
         },
-        "overlap_matrix": {
-            f"{k[0]}_{k[1]}": v for k, v in overlap_matrix.items()
-        },
+        "overlap_matrix": {f"{k[0]}_{k[1]}": v for k, v in overlap_matrix.items()},
         "spacing_recommendations": spacing_opt,
     }
 
@@ -202,9 +196,9 @@ def optimize_field_spacing(
             well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[
                 0
             ],
-            well_locations.loc[
-                well_locations["well_id"] == well_id, "longitude"
-            ].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[
+                0
+            ],
         )
         for well_id in well_ids
     }
@@ -220,7 +214,9 @@ def optimize_field_spacing(
         max_spacing=max_spacing,
     )
 
-    logger.info(f"Spacing optimization completed. Recommended: {result['recommended_spacing']:.0f} ft")
+    logger.info(
+        f"Spacing optimization completed. Recommended: {result['recommended_spacing']:.0f} ft"
+    )
 
     return result
 
@@ -273,8 +269,12 @@ def analyze_well_pattern(
     # Convert locations to dictionary
     locations_dict = {
         well_id: (
-            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[0],
-            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[
+                0
+            ],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[
+                0
+            ],
         )
         for well_id in well_locations["well_id"]
     }
@@ -298,5 +298,6 @@ def analyze_well_pattern(
             drainage_radii=drainage_radii,
         )
     else:
-        raise ValueError(f"Unknown pattern type: {pattern_type}. Must be '5-spot' or '9-spot'")
-
+        raise ValueError(
+            f"Unknown pattern type: {pattern_type}. Must be '5-spot' or '9-spot'"
+        )

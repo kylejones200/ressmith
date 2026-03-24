@@ -17,7 +17,7 @@ def sample_well_data():
     """Create sample well data for portfolio testing."""
     well_data = {}
     for i in range(3):
-        dates = pd.date_range("2020-01-01", periods=24, freq="M")
+        dates = pd.date_range("2020-01-01", periods=24, freq="ME")
         t = np.arange(len(dates))
         rates = (100 - i * 10) * np.exp(-0.1 * t) + np.random.normal(0, 2, size=len(t))
         rates = np.maximum(rates, 1.0)

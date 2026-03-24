@@ -7,11 +7,7 @@ and facility constraint handling.
 import logging
 from typing import Any
 
-import numpy as np
-import pandas as pd
-
 from ressmith.primitives.production_ops import (
-    AllocationResult,
     FacilityConstraints,
     allocate_production_optimal,
     allocate_production_proportional,
@@ -186,6 +182,3 @@ def apply_constraints_to_production(
     logger.info(f"Constrained production: {sum(constrained_rates.values()):.0f}")
 
     return constrained_rates
-
-
-

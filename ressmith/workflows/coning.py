@@ -84,8 +84,7 @@ def analyze_well_coning(
     >>> print(f"Coning risk: {result['coning_risk']}")
     """
     logger.info(
-        f"Analyzing coning: rate={production_rate:.1f} STB/day, "
-        f"method={method}"
+        f"Analyzing coning: rate={production_rate:.1f} STB/day, " f"method={method}"
     )
 
     result = analyze_coning(
@@ -264,18 +263,19 @@ def forecast_wor_gor_with_coning(
     water_rate = oil_rate_array * wor
     gas_rate = oil_rate_array * gor / 1000.0  # Convert SCF to MCF
 
-    result_df = pd.DataFrame({
-        "time": time_array,
-        "oil_rate": oil_rate_array,
-        "wor": wor,
-        "gor": gor,
-        "water_cut": water_cut,
-        "water_rate": water_rate,
-        "gas_rate": gas_rate,
-        "breakthrough_time": breakthrough_time if breakthrough_time is not None else np.nan,
-    })
+    result_df = pd.DataFrame(
+        {
+            "time": time_array,
+            "oil_rate": oil_rate_array,
+            "wor": wor,
+            "gor": gor,
+            "water_cut": water_cut,
+            "water_rate": water_rate,
+            "gas_rate": gas_rate,
+            "breakthrough_time": (
+                breakthrough_time if breakthrough_time is not None else np.nan
+            ),
+        }
+    )
 
     return result_df
-
-
-

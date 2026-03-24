@@ -347,4 +347,3 @@ def prepare_boundary_dominated_plot_data(
             "cumulative": cumulative,
         }
     )
-

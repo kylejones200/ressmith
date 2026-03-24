@@ -11,11 +11,28 @@ from typing import Any
 
 import pandas as pd
 
-from ressmith.objects.domain import DeclineSpec, ForecastResult, ForecastSpec, ProductionSeries, RateSeries
+from ressmith.objects.domain import (
+    DeclineSpec,
+    ForecastResult,
+    ForecastSpec,
+    ProductionSeries,
+    RateSeries,
+)
 from ressmith.primitives.base import BaseDeclineModel
-from ressmith.primitives.constraints import clip_parameters, get_default_bounds, validate_parameters
+from ressmith.primitives.constraints import (
+    clip_parameters,
+    get_default_bounds,
+    validate_parameters,
+)
 from ressmith.primitives.data_utils import extract_rate_data
-from ressmith.primitives.decline import arps_exponential, arps_harmonic, arps_hyperbolic, fit_arps_exponential, fit_arps_harmonic, fit_arps_hyperbolic
+from ressmith.primitives.decline import (
+    arps_exponential,
+    arps_harmonic,
+    arps_hyperbolic,
+    fit_arps_exponential,
+    fit_arps_harmonic,
+    fit_arps_hyperbolic,
+)
 from ressmith.utils.errors import ERR_MODEL_NOT_FITTED
 
 
@@ -231,4 +248,3 @@ class ArpsHarmonicModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-

@@ -150,7 +150,7 @@ class DatasetCatalog:
           gas: Gas
 
     Example:
-        >>> from decline_curve.catalog import DatasetCatalog
+        >>> from ressmith.workflows.catalog import DatasetCatalog
         >>> catalog = DatasetCatalog('catalogs/')
         >>> entry = catalog.get('pennsylvania')
         >>> df = catalog.load_data(entry)

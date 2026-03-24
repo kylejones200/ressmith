@@ -193,7 +193,6 @@ def check_sequence_preparation(
         "errors": [],
     }
 
-
     if len(sequences) != len(targets):
         checks["proper_sequencing"] = False
         checks["errors"].append(

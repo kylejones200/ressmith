@@ -12,7 +12,7 @@ We begin with a pandas DataFrame that represents monthly oil production.
 import numpy as np
 import pandas as pd
 
-idx = pd.date_range("2019-01-01", periods=48, freq="M")
+idx = pd.date_range("2019-01-01", periods=48, freq="ME")
 rate = 800 * (1 + 0.02 * idx.month) ** -1
 rate = rate + np.random.normal(0, 20, size=len(rate))
 

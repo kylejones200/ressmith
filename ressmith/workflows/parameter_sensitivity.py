@@ -10,8 +10,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import HistoryMatchResult
-
 logger = logging.getLogger(__name__)
 
 
@@ -70,7 +68,9 @@ def analyze_parameter_sensitivity(
             try:
                 objective_value = objective_function(test_params)
             except Exception as e:
-                logger.warning(f"Error evaluating objective for {param_name}={test_value}: {e}")
+                logger.warning(
+                    f"Error evaluating objective for {param_name}={test_value}: {e}"
+                )
                 objective_value = float("inf")
 
             variation_pct = (
@@ -185,8 +185,8 @@ def identify_critical_parameters(
     else:
         coefficients = sensitivity_results
 
-    critical = coefficients[
-        coefficients["normalized_sensitivity"].abs() > threshold
-    ]["parameter"].tolist()
+    critical = coefficients[coefficients["normalized_sensitivity"].abs() > threshold][
+        "parameter"
+    ].tolist()
 
     return critical

@@ -22,7 +22,7 @@ def resample_to_frequency(
     time_index : pd.DatetimeIndex
         Input time index
     frequency : str
-        Pandas frequency string (e.g., 'D', 'M', 'W')
+        Pandas frequency string (e.g., 'D', 'ME', 'W')
 
     Returns
     -------

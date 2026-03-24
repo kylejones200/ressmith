@@ -479,4 +479,3 @@ def forecast_water_cut_with_breakthrough(
             water_cut[i] = min(water_cut[i], max_water_cut)
 
     return water_cut
-

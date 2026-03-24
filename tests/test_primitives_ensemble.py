@@ -15,7 +15,7 @@ from ressmith.primitives.ensemble import (
 @pytest.fixture
 def sample_forecasts():
     """Create sample forecasts for testing."""
-    dates = pd.date_range("2020-01-01", periods=12, freq="M")
+    dates = pd.date_range("2020-01-01", periods=12, freq="ME")
 
     # Three different forecasts
     forecast1 = ForecastResult(

@@ -10,7 +10,14 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from ressmith.objects.domain import DeclineSegment, DeclineSpec, ForecastResult, ForecastSpec, ProductionSeries, RateSeries
+from ressmith.objects.domain import (
+    DeclineSegment,
+    DeclineSpec,
+    ForecastResult,
+    ForecastSpec,
+    ProductionSeries,
+    RateSeries,
+)
 from ressmith.primitives.base import BaseDeclineModel
 from ressmith.primitives.data_utils import extract_rate_data
 from ressmith.primitives.segmented import check_continuity, fit_segment, predict_segment
@@ -202,6 +209,3 @@ class SegmentedDeclineModel(BaseDeclineModel):
             "supports_censoring": False,
             "supports_intervals": False,
         }
-
-
-

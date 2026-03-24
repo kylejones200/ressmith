@@ -5,6 +5,7 @@ For reading a single CSV file, see workflows.io.read_csv_production.
 """
 
 import logging
+from pathlib import Path
 
 import pandas as pd
 
@@ -34,7 +35,10 @@ def load_production_csvs(
     """
     frames = []
     for p in paths:
-        df = pd.read_csv(p)
+        path = Path(p).resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {path}")
+        df = pd.read_csv(path)
         _assert_cols(df, [date_col, well_id_col, oil_col])
         df[date_col] = pd.to_datetime(df[date_col])
         frames.append(df[[date_col, well_id_col, oil_col]])
@@ -61,7 +65,7 @@ def to_monthly(
     """
     return (
         df.groupby(well_id_col)
-        .resample("M")[oil_col]
+        .resample("ME")[oil_col]
         .sum()
         .reset_index()
         .set_index("date")
@@ -98,7 +102,10 @@ def load_price_csv(
     Returns:
         A DataFrame indexed by date with a single price column.
     """
-    df = pd.read_csv(path)
+    p = Path(path).resolve()
+    if not p.exists():
+        raise FileNotFoundError(f"File not found: {p}")
+    df = pd.read_csv(p)
     _assert_cols(df, [date_col, price_col])
     df[date_col] = pd.to_datetime(df[date_col])
     df = df.rename(columns={date_col: "date", price_col: "price"}).set_index("date")

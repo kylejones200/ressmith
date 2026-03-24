@@ -33,7 +33,7 @@ def generate_portfolio_data(n_wells=10, n_periods=24):
     np.random.seed(42)
     
     well_data = {}
-    base_dates = pd.date_range("2020-01-01", periods=n_periods, freq="M")
+    base_dates = pd.date_range("2020-01-01", periods=n_periods, freq="ME")
     
     for i in range(n_wells):
         well_id = f"WELL_{i+1:03d}"

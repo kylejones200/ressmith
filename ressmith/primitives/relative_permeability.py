@@ -9,6 +9,8 @@ References:
 - LET (Lomeland-Ebeltoft-Thomas) correlation, 2005.
 - Brooks, R.H. and Corey, A.T., "Properties of Porous Media Affecting Fluid Flow,"
   J. Irrig. Drain. Div., 1966.
+- van Genuchten, M.Th., "A Closed-form Equation for Predicting the Hydraulic
+  Conductivity of Unsaturated Soils," Soil Sci. Soc. Am. J., 1980.
 """
 
 import logging
@@ -301,45 +303,173 @@ def apply_hysteresis_to_relative_permeability(
     return np.clip(kr_corrected, 0.0, 1.0)
 
 
+def van_genuchten_m_from_n(n: float) -> float:
+    """Mualem (1980) constraint m = 1 - 1/n used with van Genuchten retention."""
+    if n <= 1.0:
+        raise ValueError(f"Van Genuchten n must be > 1, got {n}")
+    return 1.0 - 1.0 / n
+
+
+def van_genuchten_effective_saturation(
+    capillary_pressure: np.ndarray,
+    alpha: float,
+    n: float,
+    m: float | None = None,
+) -> np.ndarray:
+    """Wetting-phase effective saturation from capillary pressure (drainage).
+
+    Se = [1 + (alpha * Pc)^n]^(-m), with Pc >= 0.
+
+    Parameters
+    ----------
+    capillary_pressure
+        Capillary pressure (non-negative), same units as 1/alpha.
+    alpha
+        VG scale parameter (1 / pressure).
+    n
+        VG shape parameter, n > 1.
+    m
+        VG exponent. If None, uses Mualem pairing m = 1 - 1/n.
+
+    Returns
+    -------
+    np.ndarray
+        Effective saturation Se in (0, 1].
+
+    Reference
+    ---------
+        van Genuchten, M.Th., Soil Sci. Soc. Am. J., 44:892-898, 1980.
+    """
+    if alpha <= 0:
+        raise ValueError(f"alpha must be positive, got {alpha}")
+    mm = van_genuchten_m_from_n(n) if m is None else m
+    if mm <= 0:
+        raise ValueError(f"m must be positive, got {mm}")
+    pc = np.maximum(np.asarray(capillary_pressure, dtype=float), 0.0)
+    return (1.0 + (alpha * pc) ** n) ** (-mm)
+
+
+def van_genuchten_capillary_pressure(
+    saturation: np.ndarray,
+    saturation_irreducible: float,
+    alpha: float,
+    n: float,
+    m: float | None = None,
+    pc_max: float = 1000.0,
+) -> np.ndarray:
+    """Capillary pressure vs wetting saturation (inverted van Genuchten retention).
+
+    Uses Se = (Sw - Swr) / (1 - Swr) and
+
+        Pc = (1/alpha) * (Se^(-1/m) - 1)^(1/n)
+
+    Parameters
+    ----------
+    saturation
+        Wetting saturation Sw (fraction).
+    saturation_irreducible
+        Irreducible wetting saturation Swr.
+    alpha
+        VG scale alpha (1 / pressure); with ``entry_pressure`` in psi, using
+        alpha ~= 1/P_entry is a rough physical scale.
+    n
+        VG n, must be > 1.
+    m
+        VG m. If None, m = 1 - 1/n (Mualem constraint).
+    pc_max
+        Upper clip for Pc (default 1000, same order as Brooks-Corey helper).
+
+    Returns
+    -------
+    np.ndarray
+        Capillary pressure (same pressure units as 1/alpha).
+
+    Reference
+    ---------
+        van Genuchten, M.Th., Soil Sci. Soc. Am. J., 44:892-898, 1980.
+    """
+    if alpha <= 0:
+        raise ValueError(f"alpha must be positive, got {alpha}")
+    mm = van_genuchten_m_from_n(n) if m is None else m
+    if mm <= 0:
+        raise ValueError(f"m must be positive, got {mm}")
+
+    sw = np.asarray(saturation, dtype=float)
+    denom = 1.0 - saturation_irreducible
+    if denom <= 0:
+        raise ValueError("saturation_irreducible must be < 1")
+    se = (sw - saturation_irreducible) / denom
+    se = np.clip(se, 1e-6, 1.0)
+    inner = np.maximum(se ** (-1.0 / mm) - 1.0, 0.0)
+    pc = (1.0 / alpha) * (inner ** (1.0 / n))
+    return np.clip(pc, 0.0, pc_max)
+
+
 def calculate_capillary_pressure(
     saturation: np.ndarray,
     entry_pressure: float = 5.0,
     lambda_parameter: float = 2.0,
     saturation_irreducible: float = 0.2,
     method: str = "brooks_corey",
+    *,
+    vg_alpha: float | None = None,
+    vg_n: float | None = None,
+    vg_m: float | None = None,
 ) -> np.ndarray:
-    """Calculate capillary pressure using Brooks-Corey correlation.
+    """Calculate capillary pressure (Brooks-Corey or van Genuchten).
 
-    Pc = Pe * (S_norm)^(-1/λ)
+    Brooks-Corey::
+
+        Pc = Pe * Se^(-1/lambda),  Se = (Sw - Swr) / (1 - Swr)
+
+    van Genuchten (inverted retention)::
+
+        Pc = (1/alpha) * (Se^(-1/m) - 1)^(1/n)
 
     Args:
-        saturation: Phase saturation (fraction, 0-1)
-        entry_pressure: Entry pressure (psi)
-        lambda_parameter: Pore size distribution parameter (default: 2.0)
-        saturation_irreducible: Irreducible saturation (fraction)
-        method: Method ('brooks_corey' or 'van_genuchten')
+        saturation: Wetting-phase saturation (fraction, 0-1)
+        entry_pressure: Brooks-Corey entry pressure Pe (psi). For van Genuchten,
+            used only if ``vg_alpha`` is omitted: alpha defaults to ``1/entry_pressure``.
+        lambda_parameter: Brooks-Corey pore-size index lambda
+        saturation_irreducible: Irreducible wetting saturation Swr
+        method: ``brooks_corey`` or ``van_genuchten``
+        vg_alpha: van Genuchten alpha (1/psi). Default: ``1/entry_pressure``.
+        vg_n: van Genuchten n > 1. Default: 2.5
+        vg_m: van Genuchten m. Default: Mualem m = 1 - 1/n
 
     Returns:
-        Capillary pressure array (psi)
+        Capillary pressure (psi if alpha and Pe use consistent psi units)
 
-    Reference:
-        Brooks, R.H. and Corey, A.T., "Properties of Porous Media Affecting Fluid Flow,"
-        J. Irrig. Drain. Div., 1966.
+    References:
+        Brooks & Corey (1966); van Genuchten (1980).
 
     Example:
-        >>> Sw = np.array([0.2, 0.3, 0.4, 0.5, 0.6])
-        >>> Pc = calculate_capillary_pressure(Sw, entry_pressure=5.0, lambda_parameter=2.0)
+        >>> Sw = np.array([0.25, 0.4, 0.6, 0.8])
+        >>> Pc_bc = calculate_capillary_pressure(Sw, entry_pressure=5.0, lambda_parameter=2.0)
+        >>> Pc_vg = calculate_capillary_pressure(
+        ...     Sw, method="van_genuchten", entry_pressure=5.0, vg_n=3.0
+        ... )
     """
-    # Normalized saturation
-    S_norm = (saturation - saturation_irreducible) / (1.0 - saturation_irreducible)
-    S_norm = np.clip(S_norm, 0.01, 1.0)  # Avoid division by zero
+    method_l = method.lower().replace("-", "_")
+    if method_l == "van_genuchten":
+        alpha = vg_alpha if vg_alpha is not None else 1.0 / max(entry_pressure, 1e-12)
+        n_vg = vg_n if vg_n is not None else 2.5
+        return van_genuchten_capillary_pressure(
+            saturation,
+            saturation_irreducible=saturation_irreducible,
+            alpha=alpha,
+            n=n_vg,
+            m=vg_m,
+        )
 
-    if method == "van_genuchten":
-        # Van Genuchten correlation (not implemented, use Brooks-Corey)
-        pass
+    if method_l != "brooks_corey":
+        raise ValueError(
+            f"Unknown capillary pressure method: {method!r}. "
+            "Use 'brooks_corey' or 'van_genuchten'."
+        )
 
     # Brooks-Corey correlation
-    # Pc = Pe * (S_norm)^(-1/λ)
+    S_norm = (saturation - saturation_irreducible) / (1.0 - saturation_irreducible)
+    S_norm = np.clip(S_norm, 0.01, 1.0)
     Pc = entry_pressure * (S_norm ** (-1.0 / lambda_parameter))
-
-    return np.clip(Pc, 0.0, 1000.0)  # Reasonable bounds
+    return np.clip(Pc, 0.0, 1000.0)

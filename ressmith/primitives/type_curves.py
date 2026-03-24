@@ -12,12 +12,12 @@ References:
 
 import logging
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 from scipy.optimize import minimize
 
 from ressmith.primitives.decline import arps_hyperbolic
+from ressmith.utils.errors import ERR_INSUFFICIENT_DATA, format_error
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +70,7 @@ def generate_arps_type_curve(
         time_normalized = np.logspace(-2, 2, 100)
 
     # Generate normalized rate using ARPS hyperbolic
-    rate_normalized = arps_hyperbolic(
-        time_normalized, qi_normalized, di_normalized, b
-    )
+    rate_normalized = arps_hyperbolic(time_normalized, qi_normalized, di_normalized, b)
 
     return time_normalized, rate_normalized
 
@@ -103,7 +101,9 @@ def normalize_production_data(
     """
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="normalization"))
+        raise ValueError(
+            format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="normalization")
+        )
 
     time_valid = time[valid_mask]
     rate_valid = rate[valid_mask]
@@ -160,7 +160,11 @@ def match_type_curve(
     """
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
-        raise ValueError(format_error(ERR_INSUFFICIENT_DATA, min_points=3, analysis="type curve matching"))
+        raise ValueError(
+            format_error(
+                ERR_INSUFFICIENT_DATA, min_points=3, analysis="type curve matching"
+            )
+        )
 
     time_valid = time[valid_mask]
     rate_valid = rate[valid_mask]
@@ -313,4 +317,3 @@ def calculate_type_curve_statistics(
         "correlation": match.correlation,
         "match_error": match.match_error,
     }
-

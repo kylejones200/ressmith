@@ -86,7 +86,9 @@ class FitDeclineTask:
 
                 assert_series_like(data, name="data")
             except ImportError:
-                pass
+                logger.debug(
+                    "timesmith.typing validators unavailable; skipping assert_series_like"
+                )
 
             time_index = data.index
             if not isinstance(time_index, pd.DatetimeIndex):
@@ -100,10 +102,19 @@ class FitDeclineTask:
             fitted_model = self.model.fit(rate_series)
         else:
             time_col = self.column_mapping.get("time", data.index.name or "index")
-            if time_col == "index":
+            if time_col == "index" or (
+                time_col not in data.columns
+                and data.index.name == time_col
+                and isinstance(data.index, pd.DatetimeIndex)
+            ):
                 time_index = data.index
-            else:
+            elif time_col in data.columns:
                 time_index = pd.to_datetime(data[time_col])
+            else:
+                raise ValueError(
+                    f"Time column '{time_col}' not found in data "
+                    f"(columns: {list(data.columns)})"
+                )
 
             if not isinstance(time_index, pd.DatetimeIndex):
                 raise ValueError("Time column must be datetime")

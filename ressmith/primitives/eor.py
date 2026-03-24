@@ -214,19 +214,27 @@ def analyze_waterflood_pattern(
         ... )
     """
     # Calculate areal sweep efficiency
-    Ea = calculate_areal_sweep_efficiency(pattern_type, mobility_ratio, pore_volumes_injected)
+    Ea = calculate_areal_sweep_efficiency(
+        pattern_type, mobility_ratio, pore_volumes_injected
+    )
 
     # Calculate displacement efficiency
-    Ed = calculate_displacement_efficiency(oil_saturation_initial, oil_saturation_residual)
+    Ed = calculate_displacement_efficiency(
+        oil_saturation_initial, oil_saturation_residual
+    )
 
     # Calculate vertical sweep efficiency
-    Ev = calculate_vertical_sweep_efficiency(mobility_ratio, permeability_variation, pore_volumes_injected)
+    Ev = calculate_vertical_sweep_efficiency(
+        mobility_ratio, permeability_variation, pore_volumes_injected
+    )
 
     # Overall recovery efficiency = Ea * Ed * Ev
     Er = Ea * Ed * Ev
 
     # Injection efficiency
-    Ei = calculate_injection_efficiency(injection_rate, production_rate, voidage_replacement_ratio)
+    Ei = calculate_injection_efficiency(
+        injection_rate, production_rate, voidage_replacement_ratio
+    )
 
     return WaterfloodPatternResult(
         pattern_type=pattern_type,
@@ -322,9 +330,6 @@ def predict_pattern_flood_performance(
         oil_saturation_initial, oil_saturation_residual
     )
 
-    # Calculate pattern area (assumed)
-    pattern_area = 160.0  # acres (typical 5-spot)
-
     for i, PV in enumerate(pore_volumes_injected):
         # Calculate areal sweep efficiency
         Ea = calculate_areal_sweep_efficiency(pattern_type, mobility_ratio, PV)
@@ -365,4 +370,3 @@ def predict_pattern_flood_performance(
         "water_cut": water_cut,
         "cumulative_oil": cumulative_oil,
     }
-

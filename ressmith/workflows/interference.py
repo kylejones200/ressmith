@@ -14,7 +14,6 @@ from ressmith.primitives.interference import (
     analyze_well_interference,
     calculate_eur_based_interference,
     calculate_well_distance,
-    estimate_drainage_radius,
     optimize_spacing_from_eur,
     optimize_well_spacing,
 )
@@ -119,7 +118,9 @@ def analyze_interference_matrix(
 
     # Get drainage radii
     if drainage_radii is None:
-        drainage_radii = {well_id: default_drainage_radius for well_id in well_locations["well_id"]}
+        drainage_radii = {
+            well_id: default_drainage_radius for well_id in well_locations["well_id"]
+        }
     elif isinstance(drainage_radii, pd.Series):
         drainage_radii = drainage_radii.to_dict()
 
@@ -277,8 +278,12 @@ def analyze_interference_with_production_history(
     # Convert locations to dictionary
     locations_dict = {
         well_id: (
-            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[0],
-            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[
+                0
+            ],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[
+                0
+            ],
         )
         for well_id in well_ids
     }
@@ -309,19 +314,23 @@ def analyze_interference_with_production_history(
                     drainage_radius_2=r2,
                 )
 
-                results.append({
-                    "well_id_1": well_id_1,
-                    "well_id_2": well_id_2,
-                    "distance_ft": distance,
-                    "eur_1": eur_1,
-                    "eur_2": eur_2,
-                    "drainage_radius_1": r1,
-                    "drainage_radius_2": r2,
-                    "interference_factor": interference_result.interference_factor,
-                    "eur_interference_factor": eur_interference["eur_interference_factor"],
-                    "total_eur_loss": eur_interference["total_eur_loss"],
-                    "estimated_interference_percent": interference_result.estimated_interference_percent,
-                })
+                results.append(
+                    {
+                        "well_id_1": well_id_1,
+                        "well_id_2": well_id_2,
+                        "distance_ft": distance,
+                        "eur_1": eur_1,
+                        "eur_2": eur_2,
+                        "drainage_radius_1": r1,
+                        "drainage_radius_2": r2,
+                        "interference_factor": interference_result.interference_factor,
+                        "eur_interference_factor": eur_interference[
+                            "eur_interference_factor"
+                        ],
+                        "total_eur_loss": eur_interference["total_eur_loss"],
+                        "estimated_interference_percent": interference_result.estimated_interference_percent,
+                    }
+                )
 
     return pd.DataFrame(results)
 
@@ -407,8 +416,12 @@ def recommend_spacing_from_eur(
     # Convert locations to dictionary
     locations_dict = {
         well_id: (
-            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[0],
-            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[0],
+            well_locations.loc[well_locations["well_id"] == well_id, "latitude"].iloc[
+                0
+            ],
+            well_locations.loc[well_locations["well_id"] == well_id, "longitude"].iloc[
+                0
+            ],
         )
         for well_id in well_ids
     }
@@ -421,6 +434,3 @@ def recommend_spacing_from_eur(
         min_spacing=min_spacing,
         max_spacing=max_spacing,
     )
-
-
-
