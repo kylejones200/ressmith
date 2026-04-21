@@ -92,7 +92,7 @@ def krige_eur(
 
     Example:
         >>> import pandas as pd
-        >>> from decline_curve.spatial_kriging import krige_eur
+        >>> from ressmith.primitives.ml_forecast import krige_eur
         >>> # eur_df has columns: well_id, eur, long, lat
         >>> result = krige_eur(eur_df, lon_col='long', lat_col='lat', eur_col='eur')
         >>> print(f"Predicted EUR at locations: {result.predicted_values}")
@@ -425,13 +425,11 @@ def improve_eur_with_kriging(
         DataFrame with original EUR and kriged EUR estimates
 
     Example:
-        >>> from decline_curve.eur_estimation import calculate_eur_batch
-        >>> from decline_curve.spatial_kriging import improve_eur_with_kriging
-        >>> # Calculate EUR for wells
-        >>> eur_results = calculate_eur_batch(df, well_id_col='well_id')
+        >>> from ressmith.primitives.ml_forecast import improve_eur_with_kriging
+        >>> # eur_df: DataFrame with well_id, eur, lon, lat (from your EUR workflow)
         >>> # Improve with kriging
         >>> eur_improved = improve_eur_with_kriging(
-        ...     eur_results,
+        ...     eur_df,
         ...     lon_col='long',
         ...     lat_col='lat',
         ...     eur_col='eur'
@@ -564,7 +562,7 @@ def create_eur_map(
         - uncertainty_map: Prediction uncertainty [resolution, resolution]
 
     Example:
-        >>> from decline_curve.spatial_kriging import create_eur_map
+        >>> from ressmith.primitives.ml_forecast import create_eur_map
         >>> import matplotlib.pyplot as plt
         >>> lon_grid, lat_grid, eur_map, unc_map = create_eur_map(eur_df)
         >>> plt.contourf(lon_grid, lat_grid, eur_map)

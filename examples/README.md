@@ -92,17 +92,25 @@ python examples/demo_complete_field_analysis.py
 
 ## Basic Examples
 
-### 5. `basic_fit_forecast.py`
-Simple fit and forecast example.
+### `basic_fit_forecast.py`
+Synthetic monthly **oil + pressure**; **compare_models**; primary-model rule (R² then RMSE); **walk_forward_backtest**; **ensemble_forecast** (median); **probabilistic_forecast** (P10/P50/P90 cumulative); **normalize_production_with_pressure**; **generate_diagnostic_plot_data** (log–log); EUR + `forecast.csv` for economics. Extra outputs: `walk_forward_backtest.csv`, `ensemble_median_forecast.csv`, `probabilistic_cumulative_forecast_oil.csv`, `normalized_rate_vs_pressure.csv`, `diagnostic_log_log.csv`.
 
-### 6. `basic_economics.py`
-Basic economics evaluation example.
+### `basic_economics.py`
+Loads `forecast.csv` (or fallback fit); base **evaluate_economics**; **evaluate_scenarios** for price/opex, **low/high discount**, and **capex overrun**; `scenario_summary` + `economics_scenarios_detail.csv`; `cashflows.csv`.
 
-### 7. `basic_segmented.py`
-Segmented decline model example.
+### `basic_segmented.py`
+Two-segment hyperbolic; **compare_models** (hyperbolic vs power law); **walk_forward_backtest**; segmented vs single cumulative comparison; writes `segmented_model_comparison.csv`, `segmented_walk_forward.csv`, and forecast CSVs.
 
-### 8. `integration_timesmith.py`
+### `integration_timesmith.py`
 Integration with Timesmith library.
+
+### `integrated_studies.py`
+**Bundled field studies:** `well_interference_study`, `coning_study`, and `enhanced_rta_study` on synthetic locations and production. Writes `examples/out/integrated_rta_oil_pressure.csv`.
+
+**Run:**
+```bash
+uv run python examples/integrated_studies.py
+```
 
 ## Output
 

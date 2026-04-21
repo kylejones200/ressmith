@@ -16,29 +16,27 @@ idx = pd.date_range("2019-01-01", periods=48, freq="ME")
 rate = 800 * (1 + 0.02 * idx.month) ** -1
 rate = rate + np.random.normal(0, 20, size=len(rate))
 
-df = pd.DataFrame(
-    {"date": idx, "oil_rate": rate}
-).set_index("date")
+# Default decline fitting expects an ``oil`` rate column (or pass ``phase`` / column mapping).
+df = pd.DataFrame({"oil": rate}, index=idx)
 ```
 
-ResSmith validates temporal inputs using shared typing from Timesmith.
+ResSmith validates temporal inputs using shared typing from Timesmith (optional).
 
 ```python
 from timesmith.typing.validators import assert_series_like
 
-assert_series_like(df["oil_rate"])
+assert_series_like(df["oil"])
 ```
 
-We fit a decline model.
+We fit a decline model. `fit_forecast` returns **(forecast, fitted_params)**.
 
 ```python
 from ressmith.workflows import fit_forecast
 
-forecast = fit_forecast(
-    data=df,
-    rate_col="oil_rate",
-    model="arps_hyperbolic",
-    horizon=24
+forecast, params = fit_forecast(
+    df,
+    model_name="arps_hyperbolic",
+    horizon=24,
 )
 ```
 
@@ -46,24 +44,23 @@ The result contains a forecasted rate series and model metadata.
 
 ```python
 print(forecast.yhat.tail())
+print(params)
 ```
 
-We now evaluate economics.
+We now evaluate economics. `EconSpec` uses **per-period** operating expense in the current cashflow helper (not $/bbl); adjust to your forecast step.
 
 ```python
 from ressmith.workflows import evaluate_economics
 from ressmith.objects import EconSpec
 
 econ = EconSpec(
-    oil_price=70.0,
-    opex_per_unit=12.0,
-    discount_rate=0.1
+    price_assumptions={"oil": 70.0},
+    opex=400.0,
+    capex=0.0,
+    discount_rate=0.1,
 )
 
-econ_result = evaluate_economics(
-    forecast=forecast,
-    econ_spec=econ
-)
+econ_result = evaluate_economics(forecast, econ)
 ```
 
 The output includes cashflows and value metrics.
@@ -122,20 +119,22 @@ print(f"P90 EUR: {prob_result['p90'].sum():.0f} bbl")
 
 ### Portfolio Analysis
 
+Each well’s frame should match the fit workflow: **DatetimeIndex** and an **`oil`** column (unless you pass a column mapping via `fit_forecast` / portfolio kwargs).
+
 ```python
 from ressmith.workflows import analyze_portfolio
 
 well_data = {
-    'well_1': df1,
-    'well_2': df2,
-    'well_3': df3
+    "well_1": df,
+    "well_2": df.assign(oil=df["oil"] * 0.95),
+    "well_3": df.assign(oil=df["oil"] * 1.05),
 }
 portfolio = analyze_portfolio(
     well_data,
-    model_name='arps_hyperbolic',
-    econ_spec=econ
+    model_name="arps_hyperbolic",
+    econ_spec=econ,
 )
-print(portfolio.sort_values('npv', ascending=False))
+print(portfolio.sort_values("npv", ascending=False))
 ```
 
 ## Best Practices

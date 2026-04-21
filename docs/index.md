@@ -11,6 +11,7 @@ ResSmith does not aim to replace specialized reservoir simulators. It provides a
 ## Documentation Structure
 
 - **[Getting Started](getting_started.md)**: Complete workflow from production data to forecasted value
+- **[Engineer capability map](engineer_capability_map.md)**: Scenario → API index (spacing, coning, RTA, EOR, rel perm, ops, well tests, simulator)
 - **[Model Selection Guide](model_selection_guide.md)**: Engineering-focused guidance on when and why to use each decline model
 - **[Best Practices](best_practices.md)**: Industry best practices for production reservoir engineering workflows
 - **[Advanced Workflows](advanced_workflows.md)**: Multi-well analysis, history matching, EOR, and production optimization

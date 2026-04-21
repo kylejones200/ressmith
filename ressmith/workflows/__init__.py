@@ -97,6 +97,11 @@ from ressmith.workflows.integrations import (
     plot_forecast,
     spatial_analysis,
 )
+from ressmith.workflows.integrated_reservoir_workflows import (
+    coning_study,
+    enhanced_rta_study,
+    well_interference_study,
+)
 from ressmith.workflows.interference import (
     analyze_interference_matrix,
     analyze_interference_with_production_history,
@@ -276,9 +281,11 @@ __all__ = [
     "analyze_interference_with_production_history",
     "recommend_spacing",
     "recommend_spacing_from_eur",
+    "well_interference_study",
     # Coning
     "analyze_well_coning",
     "forecast_wor_gor_with_coning",
+    "coning_study",
     # Multi-well patterns
     "analyze_well_pattern",
     # Diagnostic plots
@@ -297,6 +304,7 @@ __all__ = [
     # Type Curves
     "match_type_curve_workflow",
     "generate_type_curve_library",
+    "enhanced_rta_study",
     # EOR
     "analyze_waterflood",
     "calculate_mobility_ratio_workflow",

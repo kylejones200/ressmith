@@ -163,9 +163,12 @@ def validate_normalization(
         min_transform_date = transform_dates.min()
 
         if min_transform_date < max_fit_date:
-            # This is OK - we can normalize historical data with future statistics
-            # But we should log a warning if transform is for training
-            pass
+            # Allowed: normalize historical data using stats that extend past last fit date.
+            logger.debug(
+                "Transform window starts before last fit date (max_fit=%s, min_transform=%s)",
+                max_fit_date,
+                min_transform_date,
+            )
 
     return checks
 

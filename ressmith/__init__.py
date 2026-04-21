@@ -46,9 +46,11 @@ from ressmith.workflows import (
     compare_artificial_lift_methods,
     compare_models,
     compare_simulation_to_forecast,
+    coning_study,
     create_well_pointset,
     detect_outliers,
     ensemble_forecast,
+    enhanced_rta_study,
     estimate_eur,
     evaluate_economics,
     evaluate_scenarios,
@@ -98,6 +100,7 @@ from ressmith.workflows import (
     validate_well_test_data,
     validate_well_test_results,
     walk_forward_backtest,
+    well_interference_study,
 )
 
 __all__ = [
@@ -131,8 +134,10 @@ __all__ = [
     "analyze_interference_with_production_history",
     "recommend_spacing",
     "recommend_spacing_from_eur",
+    "well_interference_study",
     # Coning analysis
     "analyze_well_coning",
+    "coning_study",
     "forecast_wor_gor_with_coning",
     # EOR workflows
     "analyze_waterflood",
@@ -158,6 +163,7 @@ __all__ = [
     "compare_artificial_lift_methods",
     # Type curves & RTA
     "match_type_curve_workflow",
+    "enhanced_rta_study",
     "generate_diagnostic_plot_data",
     "generate_all_diagnostic_plots",
     "plot_diagnostic_with_flow_regime_identification",

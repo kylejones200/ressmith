@@ -8,6 +8,7 @@ ResSmith Documentation
    :caption: Contents:
 
    getting_started
+   engineer_capability_map
    model_selection_guide
    best_practices
    advanced_workflows

@@ -23,8 +23,6 @@ maintainers = [
 ]
 
 [project.optional-dependencies]
-fit = [
-]
 viz = [
   "matplotlib>=3.7.0",
 ]
@@ -61,7 +59,7 @@ examples = [
   "ipykernel>=6.0"
 ]
 all = [
-  "ressmith[fit,viz,docs,examples]"
+  "ressmith[viz,docs,examples]"
 ]
 
 [dependency-groups]

@@ -13,6 +13,13 @@ ResSmith follows a strict 4-layer architecture with enforced one-way imports:
 
 See [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md) for details.
 
+## Documentation for reservoir engineers
+
+- [Model selection](docs/model_selection_guide.md) — when to use ARPS vs Power Law vs Duong, typical pitfalls
+- [Capability map](docs/engineer_capability_map.md) — **where to find** interference, coning, RTA/diagnostics, EOR, rel perm, allocation, well-test checks, simulator hooks
+- [Advanced workflows](docs/advanced_workflows.md) — multi-well, history matching, optimization
+- [Best practices](docs/best_practices.md) — workflow discipline
+
 ## Quick Start
 
 ### Decline Curve Analysis
@@ -81,9 +88,10 @@ uv pip install ressmith
 Or with optional dependencies:
 
 ```bash
-uv pip install ressmith[fit]  # Include scipy for optimization
 uv pip install ressmith[viz]  # Include matplotlib (or use plotsmith)
 ```
+
+SciPy is a core dependency; optimization does not require an extra install group.
 
 For development, clone the repository and use uv:
 
@@ -185,23 +193,31 @@ Calculate fluid properties using industry correlations:
 
 See `examples/` directory:
 
-- `basic_fit_forecast.py` - Fit model and generate forecast
-- `basic_economics.py` - Evaluate economics for a forecast
+- `basic_fit_forecast.py` — Model compare, walk-forward, ensemble, probabilistic bands, pressure normalization, diagnostics, forecast
+- `basic_economics.py` — Base economics plus discount / capex / price scenarios
+- `basic_segmented.py` — Segmented decline, model compare, walk-forward vs single ARPS
+- `integrated_studies.py` — Well interference, coning, and enhanced RTA bundled workflows (`examples/README.md` lists all demos)
 
 Run examples:
 
 ```bash
-python examples/basic_fit_forecast.py
-python examples/basic_economics.py
+uv run python examples/basic_fit_forecast.py
+uv run python examples/basic_economics.py
+uv run python examples/basic_segmented.py
+uv run python examples/integrated_studies.py
 ```
 
 ## Migration from pydca
 
-This library is being migrated from the `pydca` (decline-curve) repository. See:
-- [MIGRATION_PLAN.md](MIGRATION_PLAN.md) - Migration strategy
-- [MIGRATION_STATUS.md](MIGRATION_STATUS.md) - Current status
+The decline-curve (`pydca`) codebase has been merged into ResSmith. See [MERGE_MIGRATION.md](MERGE_MIGRATION.md) for import changes, the optional `decline_curve_shim`, and when you can remove a local `pydca` clone.
 
 ## Development
+
+**Public surface:** Prefer imports from the top-level `ressmith` package or documented subpackages (`ressmith.primitives`, `ressmith.objects`). Modules such as workflow runners, catalog, and config under `ressmith.workflows` are internal unless re-exported from `ressmith` or named in API docs.
+
+**Errors:** Invalid inputs typically raise `ValueError` with a short message. Some workflow helpers return `None` on recoverable failure while logging the exception; check each function’s docstring for its contract.
+
+**Tests:** Integration tests that require `timesmith.typing` validators are skipped when that stack is unavailable (`pytest` markers / `skipif`). Use `uv run pytest -m "not integration"` to exclude them.
 
 ```bash
 # Install dependencies (including dev group)

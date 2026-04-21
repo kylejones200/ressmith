@@ -1,8 +1,8 @@
 """
-Decline curve analysis API - compatibility layer for decline_curve and PetroSmith.
+Decline curve analysis API - compatibility layer for legacy pydca/decline-curve and PetroSmith.
 
 This module provides the dca API (single_well, forecast) that maps to ResSmith
-workflows and ported ML forecasters from decline-curve.
+workflows and ported ML forecasters from the former decline-curve project.
 
 Example:
     >>> from ressmith import dca
