@@ -5,7 +5,7 @@ A comprehensive reservoir engineering toolkit with strict 4-layer architecture
 for production analysis, decline curve analysis, forecasting, and economic evaluation.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 # Public API: Workflows
 # Public API: Core objects
