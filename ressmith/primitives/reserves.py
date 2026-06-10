@@ -204,15 +204,19 @@ def calculate_eur_from_params(
         if qi <= 0 or di <= 0:
             return None
 
-        if model_name == "exponential":
+        # MODEL_REGISTRY uses "arps_hyperbolic" / "arps_exponential" / "arps_harmonic";
+        # strip the "arps_" prefix so both naming conventions route correctly.
+        kind = model_name[len("arps_"):] if model_name.startswith("arps_") else model_name
+
+        if kind == "exponential":
             return calculate_eur_exponential(qi, di, t_max, econ_limit)
-        elif model_name == "hyperbolic":
+        elif kind == "hyperbolic":
             b = params.get("b", 0.5)
             if b <= 0 or b >= 1:
                 # Invalid b-factor, treat as exponential
                 return calculate_eur_exponential(qi, di, t_max, econ_limit)
             return calculate_eur_hyperbolic(qi, di, b, t_max, econ_limit)
-        elif model_name == "harmonic":
+        elif kind == "harmonic":
             return calculate_eur_harmonic(qi, di, t_max, econ_limit)
         else:
             # Unknown model, use exponential as default
