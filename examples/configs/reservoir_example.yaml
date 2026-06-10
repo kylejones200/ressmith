@@ -1,0 +1,88 @@
+# PetroSmith Example - Reservoir Analysis
+# Porosity distribution analysis
+
+project:
+  name: "Reservoir Porosity Distribution"
+  description: "Spatial distribution of reservoir porosity"
+  output_dir: "./results/reservoir_analysis"
+  tags:
+    - reservoir
+    - porosity
+    - volumetrics
+
+data:
+  input_file: "examples/configs/reservoir_data.csv"
+  x_column: "x"
+  y_column: "y"
+  z_column: "porosity"
+  delimiter: ","
+
+preprocessing:
+  remove_outliers: true
+  outlier_method: "iqr"
+  outlier_threshold: 2.5
+  transform: null
+  standardize: false
+
+variogram:
+  n_lags: 15
+  models:
+    - spherical
+    - exponential
+    - gaussian
+  auto_fit: true
+  anisotropy: true
+  directions:
+    - 0
+    - 90
+
+kriging:
+  method: "ordinary"
+  neighborhood:
+    max_neighbors: 25
+    min_neighbors: 3
+    search_strategy: "elliptical"
+  grid:
+    x_min: 0
+    x_max: 5000
+    y_min: 0
+    y_max: 5000
+    resolution: 50
+
+validation:
+  cross_validation: true
+  n_folds: 10
+  metrics:
+    - rmse
+    - mae
+    - r2
+
+visualization:
+  style: "publication"
+  plots:
+    - variogram
+    - kriging_map
+    - variance_map
+    - histogram
+  colormap: "RdYlBu"
+  dpi: 300
+  show_data_points: true
+
+output:
+  save_predictions: true
+  save_variance: true
+  save_plots: true
+  save_model: true
+  formats:
+    - csv
+    - npy
+    - png
+    - json
+
+# Reservoir-specific configuration
+reservoir:
+  calculate_volumes: true
+  porosity_data: "porosity"
+  saturation_data: "sw"
+  net_to_gross: 0.8
+  formation_volume_factor: 1.2
