@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ressmith"
-version = "0.3.0"
+version = "0.3.1"
 description = "Reservoir engineering library for production analysis, forecasting, and economic evaluation"
 readme = "README.md"
 license = "MIT"
@@ -14,7 +14,7 @@ dependencies = [
   "pandas>=2.0.0",
   "scipy>=1.10.0",
   "timesmith>=0.1.0",
-  "decline-curve>=0.6.0",  # canonical decline/economics math kernel (delegated to)
+  "decline-curve>=0.7.0",  # canonical decline/economics math kernel (delegated to)
 ]
 authors = [
   { name = "Kyle T. Jones", email = "kyletjones@gmail.com" }

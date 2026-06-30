@@ -1,3 +1,11 @@
+# Release v0.3.1
+
+Dependency correctness: require `decline-curve>=0.7.0` (the version that ships
+`npv_from_cashflow`, which 0.3.0's economics delegation calls). 0.3.0 declared
+`>=0.6.0`, which predates that helper; 0.3.1 pins the true minimum.
+
+---
+
 # Release v0.3.0
 
 ## Summary
