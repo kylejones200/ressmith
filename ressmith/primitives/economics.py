@@ -87,40 +87,50 @@ def cashflow_from_forecast(forecast: ForecastResult, spec: EconSpec) -> pd.DataF
 
 def npv(cashflows: np.ndarray, discount_rate: float) -> float:
     """
-    Compute Net Present Value.
+    Compute Net Present Value of a monthly net-cashflow series.
+
+    Delegates to the canonical ``decline-curve`` kernel so the discount
+    convention lives in exactly one place. ``discount_rate`` is an **annual**
+    rate, applied at the effective monthly rate ``(1 + r)**(1/12) - 1``
+    (period 0 undiscounted). This is the correct effective-annual convention;
+    earlier in-house code treated ``discount_rate`` as a raw per-period rate,
+    which silently mis-discounted annual inputs by ~12x.
 
     Parameters
     ----------
     cashflows : np.ndarray
-        Cashflow values (can be negative)
+        Monthly net-cashflow values (can be negative; capex at index 0).
     discount_rate : float
-        Discount rate per period
+        Annual discount rate (0.10 = 10%/yr).
 
     Returns
     -------
     float
-        NPV
+        NPV.
     """
-    periods = np.arange(len(cashflows))
-    discount_factors = (1.0 + discount_rate) ** periods
-    return np.sum(cashflows / discount_factors)
+    from decline_curve.economics import npv_from_cashflow
+
+    return float(npv_from_cashflow(np.asarray(cashflows, dtype=float), discount_rate))
 
 
 def irr(cashflows: np.ndarray, use_scipy: bool | None = None) -> float | None:
     """
-    Compute Internal Rate of Return.
+    Compute Internal Rate of Return (annual).
+
+    The root search uses :func:`npv`, which now applies an effective-annual
+    discount convention, so the returned IRR is an **annual** rate.
 
     Parameters
     ----------
     cashflows : np.ndarray
-        Cashflow values
+        Monthly net-cashflow values
     use_scipy : bool, optional
         Force use of scipy (default: auto-detect)
 
     Returns
     -------
     float or None
-        IRR if found, None otherwise
+        Annual IRR if found, None otherwise
     """
     if use_scipy is None:
         use_scipy = HAS_SCIPY

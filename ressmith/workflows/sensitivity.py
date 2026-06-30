@@ -44,7 +44,7 @@ def _compute_sensitivity_case(
     revenue = q_valid * price
     costs = np.full_like(q_valid, opex)
     cashflows = revenue - costs
-    npv_value = npv(cashflows, discount_rate / 12.0)  # Convert annual to monthly
+    npv_value = npv(cashflows, discount_rate)  # npv() applies effective-annual discounting
 
     # Calculate payback (first period where cumulative cashflow >= 0)
     cumulative_cf = np.cumsum(cashflows)
