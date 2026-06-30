@@ -40,15 +40,38 @@ def test_cashflow_from_forecast():
 
 
 def test_npv():
-    """Test NPV computation."""
-    # Simple cashflow: invest 1000, get 200 per period for 5 periods
+    """NPV uses the canonical effective-annual convention (delegated to decline-curve).
+
+    ``discount_rate`` is ANNUAL and applied at the effective monthly rate
+    ``(1+r)**(1/12)-1`` over the monthly cashflow series (period 0 undiscounted).
+    """
+    # invest 1000 at t0, then 200/month for 5 months
     cashflows = np.array([-1000.0, 200.0, 200.0, 200.0, 200.0, 200.0])
-    discount_rate = 0.1
+    annual_rate = 0.10
 
-    npv_value = npv(cashflows, discount_rate)
+    npv_value = npv(cashflows, annual_rate)
 
-    # Should be negative (not profitable at 10% discount)
-    assert npv_value < 0
-    # Should be reasonable magnitude
-    assert abs(npv_value) < 1000
+    # Pinned golden under the effective-annual convention.
+    assert npv_value == pytest.approx(-23.4843, abs=1e-3)
+
+    # It must equal the explicit effective-annual reference...
+    monthly = (1.0 + annual_rate) ** (1.0 / 12.0) - 1.0
+    expected = sum(cf / (1.0 + monthly) ** i for i, cf in enumerate(cashflows))
+    assert npv_value == pytest.approx(expected, rel=1e-12)
+
+    # ...and must NOT match the old per-period bug (~-241.84), which silently
+    # treated the annual rate as a monthly rate.
+    old_per_period = sum(cf / (1.0 + annual_rate) ** i for i, cf in enumerate(cashflows))
+    assert abs(npv_value - old_per_period) > 100.0
+
+
+def test_npv_delegates_to_kernel():
+    """ressmith.npv is bit-identical to the decline-curve kernel function."""
+    from decline_curve.economics import npv_from_cashflow
+
+    cashflows = np.array([-1500.0, 300.0, 280.0, 260.0, 240.0, 220.0, 200.0])
+    for r in (0.05, 0.10, 0.15):
+        assert npv(cashflows, r) == pytest.approx(
+            npv_from_cashflow(cashflows, r), rel=1e-12
+        )
 
