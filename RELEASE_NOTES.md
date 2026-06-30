@@ -1,3 +1,33 @@
+# Release v0.3.0
+
+## Summary
+
+Consolidation release: ressmith's economics now delegate to the canonical
+`decline-curve` kernel, fixing a discount-convention bug and unifying conventions.
+
+## Highlights
+
+- **Economics on one kernel.** `primitives.economics.npv`/`irr` delegate to
+  `decline_curve.economics.npv_from_cashflow`. New dependency: `decline-curve>=0.6.0`.
+- **Discount-convention bug fixed.** Previously `npv()` treated `discount_rate` as a
+  per-period rate while callers (`tasks/core`, `workflows/scenarios`) passed an
+  ANNUAL rate — a ~10x over-discount that could flip NPV negative;
+  `workflows/sensitivity` used yet another (`/12`) convention. All now use one
+  effective-annual `(1+r)^(m/12)` convention. `irr()` now returns an annual rate.
+- **Real golden tests.** Replaced the magnitude-free NPV test (asserted only
+  `npv<0`) with a pinned golden, and added `tests/test_kernel_parity.py` locking
+  decline-rate, EUR, and NPV to the kernel.
+- **Decline/EUR kept native, parity-locked.** Rate equations are bit-identical to
+  the kernel; EUR uses ressmith's exact analytic closed-form (more accurate than
+  the kernel's trapezoid). Both are guarded by parity tests rather than delegated.
+
+## Breaking changes
+
+- NPV/IRR magnitudes change for any caller that relied on the old (incorrect)
+  per-period discounting. The new values are correct effective-annual.
+
+---
+
 # Release v0.2.3
 
 ## Summary

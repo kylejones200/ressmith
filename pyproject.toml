@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ressmith"
-version = "0.2.3"
+version = "0.3.0"
 description = "Reservoir engineering library for production analysis, forecasting, and economic evaluation"
 readme = "README.md"
 license = "MIT"
