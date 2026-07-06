@@ -70,3 +70,28 @@ def test_fit_forecast_workflow_end_to_end_on_monthly_dates():
     yhat = forecast.yhat.values.astype(float)
     assert yhat[0] == pytest.approx(QI, rel=0.01)
     assert np.all(np.diff(yhat) < 0)
+
+
+def test_fit_forecast_monthly_frequency():
+    """frequency= plumbs through to the forecast index (was hardcoded 'D')."""
+    from ressmith.workflows import fit_forecast
+
+    b = 0.8
+    idx = pd.date_range("2024-01-01", periods=24, freq="MS")
+    t = (idx - idx[0]).days.values.astype(float)
+    q = QI / (1.0 + b * DI_DAY * t) ** (1.0 / b)
+    frame = pd.DataFrame({"oil": q}, index=idx)
+
+    forecast, _ = fit_forecast(
+        frame, model_name="arps_hyperbolic", horizon=30, frequency="MS"
+    )
+    fc_idx = forecast.yhat.index
+    assert len(fc_idx) == 30
+    assert fc_idx[0] == idx[0]  # in-sample from the fit start
+    # Month starts, one calendar month apart — not days.
+    assert all(ts.day == 1 for ts in fc_idx)
+    assert (fc_idx[-1] - fc_idx[0]).days > 850
+
+    # Default stays 'D' (unchanged behavior for existing consumers).
+    forecast_d, _ = fit_forecast(frame, model_name="arps_hyperbolic", horizon=30)
+    assert (forecast_d.yhat.index[-1] - forecast_d.yhat.index[0]).days == 29

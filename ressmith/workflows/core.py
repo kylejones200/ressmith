@@ -57,10 +57,11 @@ def fit_forecast(
     if model_name not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model: {model_name}")
 
+    frequency = kwargs.pop("frequency", "D")
     model = MODEL_REGISTRY[model_name](**kwargs)
 
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
-    fitted_model, forecast_result = task.run(data, horizon=horizon)
+    fitted_model, forecast_result = task.run(data, horizon=horizon, frequency=frequency)
 
     params = {}
     if hasattr(fitted_model, "_fitted_params"):

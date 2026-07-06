@@ -64,6 +64,7 @@ class FitDeclineTask:
         self,
         data: pd.DataFrame | pd.Series,
         horizon: int | None = None,
+        frequency: str = "D",
     ) -> tuple[BaseDeclineModel, ForecastResult]:
         """
         Run fit task.
@@ -74,6 +75,9 @@ class FitDeclineTask:
             Input data
         horizon : int, optional
             Forecast horizon for in-sample forecast
+        frequency : str
+            Pandas frequency for the forecast index, e.g. 'D' or 'MS'
+            (default: 'D', unchanged behavior)
 
         Returns
         -------
@@ -141,7 +145,7 @@ class FitDeclineTask:
             fitted_model = self.model.fit(prod_series)
 
         if horizon is not None:
-            forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
+            forecast_spec = ForecastSpec(horizon=horizon, frequency=frequency)
             forecast_result = fitted_model.predict(forecast_spec)
         else:
             forecast_result = ForecastResult(yhat=pd.Series(dtype=float), metadata={})
