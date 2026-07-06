@@ -194,6 +194,8 @@ def fit_arps_exponential(
     if use_scipy is None:
         use_scipy = HAS_SCIPY
 
+    candidate: dict[str, float] | None = None
+    candidate_error = np.inf
     if use_scipy and HAS_SCIPY:
         init_guess = initial_guess_exponential(t, q)
         qi_init = init_guess["qi"]
@@ -205,8 +207,15 @@ def fit_arps_exponential(
             method="L-BFGS-B",
             bounds=((0.01, None), (1e-6, 1.0)),
         )
-        if result.success:
-            return {"qi": result.x[0], "di": result.x[1]}
+        if np.all(np.isfinite(result.x)):
+            candidate = {"qi": result.x[0], "di": result.x[1]}
+            if result.success:
+                return candidate
+            # L-BFGS-B can exit ABNORMAL (line-search failure on unscaled
+            # objectives / uneven calendar-day grids) while still sitting at
+            # the optimum. Keep the candidate and let the objective comparison
+            # against the grid decide, instead of discarding it.
+            candidate_error = _objective_exponential(result.x, t, q)
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 50)
     di_range = np.linspace(1e-4, 0.5, 50)
     best_error = np.inf
@@ -219,6 +228,8 @@ def fit_arps_exponential(
                 best_error = error
                 best_params = {"qi": qi, "di": di}
 
+    if candidate is not None and candidate_error <= best_error:
+        return candidate
     return best_params
 
 
@@ -245,6 +256,8 @@ def fit_arps_hyperbolic(
     if use_scipy is None:
         use_scipy = HAS_SCIPY
 
+    candidate: dict[str, float] | None = None
+    candidate_error = np.inf
     if use_scipy and HAS_SCIPY:
         # Use ramp-aware initial guess
         init_guess = initial_guess_hyperbolic(t, q)
@@ -258,8 +271,15 @@ def fit_arps_hyperbolic(
             method="L-BFGS-B",
             bounds=((0.01, None), (1e-6, 1.0), (0.01, 0.99)),
         )
-        if result.success:
-            return {"qi": result.x[0], "di": result.x[1], "b": result.x[2]}
+        if np.all(np.isfinite(result.x)):
+            candidate = {"qi": result.x[0], "di": result.x[1], "b": result.x[2]}
+            if result.success:
+                return candidate
+            # L-BFGS-B can exit ABNORMAL (line-search failure on unscaled
+            # objectives / uneven calendar-day grids) while still sitting at
+            # the optimum. Keep the candidate and let the objective comparison
+            # against the grid decide, instead of discarding it.
+            candidate_error = _objective_hyperbolic(result.x, t, q)
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 30)
     di_range = np.linspace(1e-4, 0.5, 30)
     b_range = np.linspace(0.1, 0.9, 20)
@@ -274,6 +294,8 @@ def fit_arps_hyperbolic(
                     best_error = error
                     best_params = {"qi": qi, "di": di, "b": b}
 
+    if candidate is not None and candidate_error <= best_error:
+        return candidate
     return best_params
 
 
@@ -300,6 +322,8 @@ def fit_arps_harmonic(
     if use_scipy is None:
         use_scipy = HAS_SCIPY
 
+    candidate: dict[str, float] | None = None
+    candidate_error = np.inf
     if use_scipy and HAS_SCIPY:
         # Use ramp-aware initial guess
         init_guess = initial_guess_harmonic(t, q)
@@ -312,8 +336,15 @@ def fit_arps_harmonic(
             method="L-BFGS-B",
             bounds=((0.01, None), (1e-6, 1.0)),
         )
-        if result.success:
-            return {"qi": result.x[0], "di": result.x[1]}
+        if np.all(np.isfinite(result.x)):
+            candidate = {"qi": result.x[0], "di": result.x[1]}
+            if result.success:
+                return candidate
+            # L-BFGS-B can exit ABNORMAL (line-search failure on unscaled
+            # objectives / uneven calendar-day grids) while still sitting at
+            # the optimum. Keep the candidate and let the objective comparison
+            # against the grid decide, instead of discarding it.
+            candidate_error = _objective_harmonic(result.x, t, q)
     qi_range = np.linspace(q.max() * 0.5, q.max() * 2.0, 50)
     di_range = np.linspace(1e-4, 0.5, 50)
     best_error = np.inf
@@ -326,4 +357,6 @@ def fit_arps_harmonic(
                 best_error = error
                 best_params = {"qi": qi, "di": di}
 
+    if candidate is not None and candidate_error <= best_error:
+        return candidate
     return best_params
