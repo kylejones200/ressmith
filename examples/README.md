@@ -19,7 +19,7 @@ Demonstrates a full single-well analysis workflow:
 
 **Run:**
 ```bash
-python examples/demo_single_well_complete.py
+uv run python examples/demo_single_well_complete.py
 ```
 
 ### 2. `demo_portfolio_analysis.py`
@@ -36,7 +36,7 @@ Demonstrates portfolio-level workflows:
 
 **Run:**
 ```bash
-python examples/demo_portfolio_analysis.py
+uv run python examples/demo_portfolio_analysis.py
 ```
 
 ### 3. `demo_advanced_workflows.py`
@@ -53,7 +53,7 @@ Demonstrates advanced workflows:
 
 **Run:**
 ```bash
-python examples/demo_advanced_workflows.py
+uv run python examples/demo_advanced_workflows.py
 ```
 
 ### 4. `demo_ensemble_probabilistic.py`
@@ -68,7 +68,7 @@ Demonstrates uncertainty quantification:
 
 **Run:**
 ```bash
-python examples/demo_ensemble_probabilistic.py
+uv run python examples/demo_ensemble_probabilistic.py
 ```
 
 ### 5. `demo_complete_field_analysis.py`
@@ -87,7 +87,7 @@ Comprehensive demo tying together all major workflows:
 
 **Run:**
 ```bash
-python examples/demo_complete_field_analysis.py
+uv run python examples/demo_complete_field_analysis.py
 ```
 
 ## Basic Examples
@@ -135,11 +135,11 @@ Some advanced demos may require:
 To run all demos sequentially:
 
 ```bash
-cd examples
-python demo_single_well_complete.py
-python demo_portfolio_analysis.py
-python demo_advanced_workflows.py
-python demo_ensemble_probabilistic.py
+uv run python examples/demo_single_well_complete.py
+uv run python examples/demo_portfolio_analysis.py
+uv run python examples/demo_advanced_workflows.py
+uv run python examples/demo_ensemble_probabilistic.py
+uv run python examples/demo_complete_field_analysis.py
 ```
 
 ## Customization
