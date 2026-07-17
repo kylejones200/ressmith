@@ -140,10 +140,12 @@ from ressmith.primitives.production_ops import (
 from ressmith.primitives.pvt import (
     PVTProperties,
     beggs_robinson_oil_viscosity,
+    bubble_point_pressure_standing,
     calculate_pvt_properties,
     chew_connally_dead_oil_viscosity,
     gas_fvf,
     gas_z_factor,
+    interfacial_tension,
     lee_gonzalez_gas_viscosity,
     standing_bo,
     standing_rs,
@@ -202,9 +204,25 @@ from ressmith.primitives.vlp import (
     VLPResult,
     calculate_choke_performance,
     calculate_tubing_performance,
+    esp_horsepower,
+    esp_required_head,
+    gas_lift_performance,
     generate_vlp_curve,
     optimize_artificial_lift,
     perform_nodal_analysis,
+    producing_gor,
+    water_cut,
+)
+
+# Volumetrics
+from ressmith.primitives.volumetrics import (
+    darcy_flow_rate,
+    original_gas_in_place,
+    original_oil_in_place,
+    permeability_from_buildup,
+    recovery_factor,
+    skin_factor_from_buildup,
+    skin_factor_from_pressures,
 )
 
 # Well Testing
@@ -212,9 +230,29 @@ from ressmith.primitives.well_test import (
     WellTestResult,
     analyze_buildup_test,
     analyze_drawdown_test,
+    analyze_mdr,
+    analyze_multirate_superposition,
     calculate_productivity_index_from_test,
+    calculate_wellbore_storage,
     detect_boundaries,
+    generate_dimensionless_pressure,
+    identify_flow_regimes,
+    match_well_test_type_curve,
 )
+
+# Drilling / geomechanics (ported from petrosmith)
+from ressmith.primitives.constants import (
+    DefaultValues,
+    PhysicalConstants,
+    TypicalRanges,
+    UnitConversions,
+)
+from ressmith.primitives.drilling import hydrostatic_pressure
+from ressmith.primitives.drilling_fluids import analyze_mud_system
+from ressmith.primitives.formation_pressure import complete_pressure_analysis
+from ressmith.primitives.geostats import ordinary_kriging, variogram_model
+from ressmith.primitives.rock_mechanics import complete_geomechanical_analysis
+from ressmith.primitives.well_control import detect_and_analyze_kick
 
 __all__ = [
     "BaseObject",
@@ -273,12 +311,46 @@ __all__ = [
     "water_fvf",
     "water_viscosity",
     "calculate_pvt_properties",
+    "bubble_point_pressure_standing",
+    "interfacial_tension",
     # Well Test
     "WellTestResult",
     "analyze_buildup_test",
     "analyze_drawdown_test",
     "detect_boundaries",
     "calculate_productivity_index_from_test",
+    "identify_flow_regimes",
+    "calculate_wellbore_storage",
+    "analyze_mdr",
+    "analyze_multirate_superposition",
+    "generate_dimensionless_pressure",
+    "match_well_test_type_curve",
+    # Volumetrics
+    "original_oil_in_place",
+    "original_gas_in_place",
+    "recovery_factor",
+    "darcy_flow_rate",
+    "permeability_from_buildup",
+    "skin_factor_from_buildup",
+    "skin_factor_from_pressures",
+    # Production helpers (VLP module)
+    "gas_lift_performance",
+    "esp_required_head",
+    "esp_horsepower",
+    "water_cut",
+    "producing_gor",
+    # Drilling / geomechanics
+    "PhysicalConstants",
+    "DefaultValues",
+    "TypicalRanges",
+    "UnitConversions",
+    "hydrostatic_pressure",
+    "analyze_mud_system",
+    "detect_and_analyze_kick",
+    "complete_geomechanical_analysis",
+    "complete_pressure_analysis",
+    "variogram_model",
+    "ordinary_kriging",
     # Interference
     "InterferenceResult",
     "calculate_eur_based_interference",

@@ -367,3 +367,222 @@ def calculate_productivity_index_from_test(
             J = test_result.permeability * reservoir_thickness / ln_term
             return max(0.1, J)
     return 0.0
+
+
+def identify_flow_regimes(
+    time: np.ndarray,
+    pressure: np.ndarray,
+) -> dict:
+    """Log-log derivative analysis for flow-regime identification.
+
+    Returns dict with flow_regimes, derivative arrays, and log-transformed series.
+    """
+    time = np.asarray(time, dtype=float)
+    pressure = np.asarray(pressure, dtype=float)
+    dp = pressure[0] - pressure
+    dt = np.diff(time)
+    ddp = np.diff(dp)
+    derivative = np.abs(ddp / (dt + 1e-12))
+
+    valid_idx = (dp[1:] > 0) & (derivative > 0)
+    log_time = np.log10(time[1:][valid_idx])
+    log_dp = np.log10(dp[1:][valid_idx])
+    log_derivative = np.log10(derivative[valid_idx])
+
+    regimes: list[dict] = []
+    if len(log_time) >= 3:
+        slopes = np.diff(log_derivative) / (np.diff(log_time) + 1e-12)
+        for i, slope in enumerate(slopes):
+            if slope > 0.8:
+                rtype = "wellbore_storage"
+            elif abs(slope) < 0.1:
+                rtype = "radial_flow"
+            elif slope > 0.3:
+                rtype = "boundary_effect"
+            else:
+                continue
+            regimes.append(
+                {
+                    "type": rtype,
+                    "start_time": float(10 ** log_time[i]),
+                    "end_time": float(10 ** log_time[i + 1]),
+                }
+            )
+
+    return {
+        "flow_regimes": regimes,
+        "derivative": derivative[valid_idx],
+        "log_time": log_time,
+        "log_pressure_change": log_dp,
+        "log_derivative": log_derivative,
+    }
+
+
+def calculate_wellbore_storage(
+    time: np.ndarray,
+    pressure: np.ndarray,
+    rate: float,
+    fvf: float = 1.2,
+) -> float:
+    """Estimate wellbore storage coefficient C (bbl/psi) from early-time unit slope.
+
+    C ≈ q * B / (24 * dp/dt) on the early unit-slope segment.
+    """
+    time = np.asarray(time, dtype=float)
+    pressure = np.asarray(pressure, dtype=float)
+    if len(time) < 3 or abs(rate) < 1e-6:
+        return 0.0
+
+    n_early = max(3, len(time) // 10)
+    dt = time[1:n_early] - time[0]
+    dp = np.abs(pressure[1:n_early] - pressure[0])
+    valid = dt > 0
+    if not np.any(valid):
+        return 0.0
+    slope = np.mean(dp[valid] / dt[valid])
+    if slope <= 0:
+        return 0.0
+    return abs(rate) * fvf / (24.0 * slope)
+
+
+def analyze_mdr(
+    time: np.ndarray,
+    pressure: np.ndarray,
+) -> dict:
+    """Miller-Dyes-Hutchinson (MDR) analysis: pws vs log(Δt)."""
+    time = np.asarray(time, dtype=float)
+    pressure = np.asarray(pressure, dtype=float)
+    log_dt = np.log10(np.maximum(time, 1e-12))
+    mid_start = len(pressure) // 4
+    mid_end = 3 * len(pressure) // 4
+    x = log_dt[mid_start:mid_end]
+    y = pressure[mid_start:mid_end]
+    A = np.vstack([x, np.ones(len(x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    return {
+        "slope": float(m),
+        "intercept": float(c),
+        "log_time": log_dt,
+        "pressure": pressure,
+    }
+
+
+def analyze_multirate_superposition(
+    time: np.ndarray,
+    pressure: np.ndarray,
+    rate: np.ndarray,
+    rate_changes: list[tuple[float, float]],
+    thickness: float,
+    wellbore_radius: float,
+    porosity: float,
+    viscosity: float,
+    fvf: float,
+    compressibility: float,
+) -> WellTestResult:
+    """Multi-rate superposition analysis for permeability and skin."""
+    import math
+
+    time = np.asarray(time, dtype=float)
+    pressure = np.asarray(pressure, dtype=float)
+    rate = np.asarray(rate, dtype=float)
+
+    superposition_time = np.zeros_like(time)
+    for i, t in enumerate(time):
+        active_rates = [(0.0, float(rate[0]))]
+        for tc, qc in rate_changes:
+            if tc < t:
+                active_rates.append((tc, qc))
+        st = 0.0
+        for j in range(len(active_rates)):
+            tc, qc = active_rates[j]
+            if j < len(active_rates) - 1:
+                q_delta = active_rates[j + 1][1] - qc
+            else:
+                q_delta = rate[i] - qc
+            if abs(q_delta) > 0.01:
+                st += q_delta * math.log10(t - tc + 1e-6)
+        superposition_time[i] = st
+
+    p_normalized = pressure / (rate + 1e-6)
+    mid_start = len(superposition_time) // 3
+    mid_end = 2 * len(superposition_time) // 3
+    x = superposition_time[mid_start:mid_end]
+    y = p_normalized[mid_start:mid_end]
+    A = np.vstack([x, np.ones(len(x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+
+    q_avg = float(np.mean(rate))
+    k = 162.6 * q_avg * fvf * viscosity / (abs(m) * thickness + 1e-12)
+    pi = float(pressure[0])
+    skin = 1.151 * (
+        (c - pi / (q_avg + 1e-12)) / (m + 1e-12)
+        - math.log10(k / (porosity * viscosity * compressibility * wellbore_radius**2))
+        + 3.23
+    )
+
+    return WellTestResult(
+        permeability=float(k),
+        skin=float(skin),
+        wellbore_storage=0.0,
+        reservoir_pressure=pi,
+    )
+
+
+def generate_dimensionless_pressure(
+    tD: np.ndarray,
+    CD: float = 100.0,
+    skin: float = 0.0,
+) -> np.ndarray:
+    """Generate dimensionless pressure response (storage + radial + late)."""
+    tD = np.asarray(tD, dtype=float)
+    pD = np.zeros_like(tD)
+    for i, t in enumerate(tD):
+        if t < 1e-3:
+            pD[i] = t / CD
+        elif t < 100:
+            pD[i] = 0.5 * (np.log(t) + 0.80907 + 2 * skin)
+        else:
+            pD[i] = 0.5 * (np.log(t) + 0.80907 + 2 * skin) + t / 1000
+    return pD
+
+
+def match_well_test_type_curve(
+    pressure_data: np.ndarray,
+    time_data: np.ndarray,
+    rate: float,
+    thickness: float,
+    porosity: float,
+    viscosity: float,
+    compressibility: float,
+    wellbore_radius: float,
+) -> dict | None:
+    """Simplified type-curve match returning CD, skin, and k estimate."""
+    del rate, thickness  # rate/h used in full PTA scaling; kept for API parity
+    pressure_data = np.asarray(pressure_data, dtype=float)
+    time_data = np.asarray(time_data, dtype=float)
+
+    best_match = None
+    best_error = float("inf")
+
+    for cd_exp in range(-2, 8):
+        CD = 10**cd_exp
+        for skin in np.linspace(-5, 10, 16):
+            tD = time_data * 0.000264 * 100 / (
+                porosity * viscosity * compressibility * wellbore_radius**2
+            )
+            pD_curve = generate_dimensionless_pressure(tD, CD, float(skin))
+            dp = pressure_data[0] - pressure_data
+            dp_max = np.max(dp)
+            pD_max = np.max(pD_curve)
+            if pD_max > 0:
+                scaled_pD = pD_curve * (dp_max / pD_max)
+                error = float(np.mean((dp - scaled_pD) ** 2))
+                if error < best_error:
+                    best_error = error
+                    best_match = {
+                        "CD": CD,
+                        "skin": float(skin),
+                        "k_estimate": 100 * (dp_max / pD_max),
+                        "error": error,
+                    }
+    return best_match

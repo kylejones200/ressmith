@@ -410,3 +410,70 @@ def optimize_artificial_lift(
         "power_required": power_hp,
         "efficiency": efficiency,
     }
+
+
+def gas_lift_performance(
+    injection_rate: float,
+    injection_pressure: float,
+    operating_pressure: float,
+    liquid_rate: float,
+) -> float:
+    """Gas-lift efficiency (STB per Mscf), pressure-adjusted."""
+    if any(
+        x < 0
+        for x in [injection_rate, injection_pressure, operating_pressure, liquid_rate]
+    ):
+        raise ValueError("All inputs must be non-negative")
+    if injection_rate == 0:
+        return 0.0
+    efficiency = liquid_rate / injection_rate
+    pressure_factor = min(operating_pressure / injection_pressure, 1.0) if injection_pressure > 0 else 0.0
+    return efficiency * pressure_factor
+
+
+def esp_required_head(
+    depth: float,
+    wellhead_pressure: float,
+    flow_rate: float,
+    fluid_specific_gravity: float = 0.85,
+) -> float:
+    """Required ESP total dynamic head (ft)."""
+    if depth < 0 or wellhead_pressure < 0 or flow_rate < 0:
+        raise ValueError("All inputs must be non-negative")
+    if fluid_specific_gravity <= 0:
+        raise ValueError("Fluid specific gravity must be positive")
+    wellhead_head = (wellhead_pressure * 2.31) / fluid_specific_gravity
+    friction_head = flow_rate * 0.0001
+    return depth + wellhead_head + friction_head
+
+
+def esp_horsepower(
+    flow_rate: float,
+    total_head: float,
+    efficiency: float = 0.70,
+) -> float:
+    """ESP hydraulic horsepower requirement."""
+    if flow_rate < 0 or total_head < 0:
+        raise ValueError("Flow rate and head must be non-negative")
+    if not (0 < efficiency <= 1):
+        raise ValueError("Efficiency must be between 0 and 1")
+    return (flow_rate * total_head * 0.85) / (3960 * efficiency)
+
+
+def water_cut(water_production: float, oil_production: float) -> float:
+    """Water cut as percentage (0-100)."""
+    if water_production < 0 or oil_production < 0:
+        raise ValueError("Production rates cannot be negative")
+    total_liquid = water_production + oil_production
+    if total_liquid == 0:
+        return 0.0
+    return (water_production / total_liquid) * 100
+
+
+def producing_gor(gas_production: float, oil_production: float) -> float:
+    """Producing GOR (scf/STB). Gas rate is Mscf/day."""
+    if gas_production < 0 or oil_production < 0:
+        raise ValueError("Production rates cannot be negative")
+    if oil_production == 0:
+        return 0.0
+    return (gas_production * 1000) / oil_production

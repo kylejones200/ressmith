@@ -15,7 +15,12 @@ import logging
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import differential_evolution, minimize
+
+try:
+    from scipy.optimize import differential_evolution, minimize
+except ImportError:  # pragma: no cover - optional dependency
+    differential_evolution = None
+    minimize = None
 
 from ressmith.objects.domain import HistoryMatchResult
 from ressmith.primitives.material_balance import (
@@ -26,6 +31,11 @@ from ressmith.primitives.material_balance import (
 )
 
 logger = logging.getLogger(__name__)
+
+_SCIPY_REQUIRED = (
+    "scipy is required for history matching. "
+    "Install with: pip install 'ressmith[scipy]'"
+)
 
 
 def history_match_material_balance(
@@ -61,6 +71,9 @@ def history_match_material_balance(
         >>> pressure = np.array([5000, 4800, 4600, 4400, 4200, 4000])
         >>> result = history_match_material_balance(time, production, pressure)
     """
+    if differential_evolution is None or minimize is None:
+        raise ImportError(_SCIPY_REQUIRED)
+
     if len(time) != len(production):
         raise ValueError("time and production must have same length")
 

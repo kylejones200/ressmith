@@ -88,10 +88,12 @@ uv pip install ressmith
 Or with optional dependencies:
 
 ```bash
-uv pip install ressmith[viz]  # Include matplotlib (or use plotsmith)
+uv pip install ressmith[viz]      # matplotlib
+uv pip install ressmith[scipy]    # type-curve match, choke opt, history matching
+uv pip install ressmith[timesmith]# optional SeriesLike validators
 ```
 
-SciPy is a core dependency; optimization does not require an extra install group.
+Core install is `numpy`, `pandas`, and `decline-curve`. SciPy is optional; ARPS decline fitting uses a numpy fallback when SciPy is absent.
 
 For development, clone the repository and use uv:
 
@@ -115,7 +117,17 @@ uv sync --group dev
 - **VLP (Vertical Lift Performance)** - Tubing performance, nodal analysis, choke performance, artificial lift optimization
 - **RTA (Rate Transient Analysis)** - Flow regime identification, permeability estimation, fracture analysis, SRV calculation
 - **Material Balance** - Solution gas drive, water drive, gas cap drive, p/Z method for gas reservoirs
-- **PVT Correlations** - Standing, Vasquez-Beggs, Lee-Gonzalez-Eakin, Beggs-Robinson correlations for oil, gas, and water properties
+- **PVT Correlations** - Standing, Vasquez-Beggs, Lee-Gonzalez-Eakin, Beggs-Robinson; Standing bubble point and interfacial tension
+- **Volumetrics** - OOIP/OGIP, Darcy rate, recovery factor, permeability and skin from buildup
+
+### Drilling & Geomechanics
+- **Drilling** - Hydrostatics, ECD, surge/swab, bit hydraulics, casing burst/collapse, hookload, torque
+- **Drilling fluids** - Mud weight, Bingham/Power-Law/Herschel-Bulkley rheology, solids control
+- **Well control** - Kick detection, kill methods, gas migration, MAASP
+- **Subsea drilling** - Riser analysis, dual-gradient, MPD, deepwater kick tolerance
+- **Rock mechanics** - Elastic properties, UCS, wellbore stability, mud-weight window
+- **Formation pressure** - Eaton/d-exponent pore pressure, fracture gradient, drilling window
+- **Geostatistics** - Variogram models, empirical variogram, ordinary kriging
 
 ### Core Capabilities
 - Fit decline models to production data

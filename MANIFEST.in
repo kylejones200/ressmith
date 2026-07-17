@@ -1,14 +1,21 @@
 # Include important files for PyPI distribution
-include README.MD
+include README.md
 include LICENSE
 include pyproject.toml
-include setup.py
 
-# Include the main package
+# Package source only
 recursive-include ressmith *.py
 
-# Include examples (but not in the installed package)
+# Tests/examples in the sdist for contributors (not installed via wheel packages)
+recursive-include tests *.py
 recursive-include examples *.py
+
+# Never ship these
+prune htmlcov
+prune .venv
+prune .pytest_cache
+prune .git
+prune .github
 
 # Exclude unnecessary files
 global-exclude __pycache__

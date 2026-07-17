@@ -1,3 +1,32 @@
+# Release v0.4.0
+
+## Summary
+
+Absorbed petrosmith into ressmith, slimmed dependencies and wheel packaging, and
+removed legacy/scratch directories from the repo.
+
+## Highlights
+
+- **Petrosmith dissolved.** Drilling, drilling fluids, well control, subsea,
+  rock mechanics, formation pressure, and geostatistics now live in
+  `ressmith.primitives` with thin workflows in `ressmith.workflows.drilling` and
+  `geomechanics`. Gaps merged into PVT, well test, volumetrics, and VLP.
+- **Leaner install.** Core deps are `numpy`, `pandas`, and `decline-curve` only.
+  `scipy` and `timesmith` moved to optional extras (`ressmith[scipy]`,
+  `ressmith[timesmith]`).
+- **Smaller wheel.** Packaging fixed to ship only `ressmith/` (no tests, legacy,
+  or examples in the wheel). Wheel ~280–320 KB vs ~480 KB before.
+- **Repo cleanup.** Removed `legacy/petrosmith`, `demo_design/`, `DELETE_LIST.md`,
+  stale `dist_0.3.0/`, and duplicate `mypi.ini`.
+
+## Breaking changes
+
+- `scipy` is no longer installed by default. Type-curve matching, choke
+  optimization, and history matching require `pip install ressmith[scipy]`.
+- `timesmith` is optional (`ressmith[timesmith]`).
+
+---
+
 # Release v0.3.1
 
 Dependency correctness: require `decline-curve>=0.7.0` (the version that ships

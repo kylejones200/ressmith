@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ressmith"
-version = "0.3.2"
+version = "0.4.0"
 description = "Reservoir engineering library for production analysis, forecasting, and economic evaluation"
 readme = "README.md"
 license = "MIT"
@@ -12,8 +12,6 @@ requires-python = ">=3.12"
 dependencies = [
   "numpy>=1.24.0",
   "pandas>=2.0.0",
-  "scipy>=1.10.0",
-  "timesmith>=0.1.0",
   "decline-curve>=0.7.0",  # canonical decline/economics math kernel (delegated to)
 ]
 authors = [
@@ -24,6 +22,14 @@ maintainers = [
 ]
 
 [project.optional-dependencies]
+# Core fitting/optimize path (decline fits degrade gracefully without it;
+# type-curve match, choke opt, history matching require it).
+scipy = [
+  "scipy>=1.10.0",
+]
+timesmith = [
+  "timesmith>=0.1.0",
+]
 viz = [
   "matplotlib>=3.7.0",
 ]
@@ -60,7 +66,7 @@ examples = [
   "ipykernel>=6.0"
 ]
 all = [
-  "ressmith[viz,docs,examples]"
+  "ressmith[viz,docs,examples,scipy,timesmith,stats,spatial]"
 ]
 
 [dependency-groups]
@@ -85,8 +91,16 @@ Changelog = "https://github.com/kylejones200/ressmith/blob/main/CHANGELOG.md"
 ressmith = "ressmith.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["*"]
-exclude = ["ndic_raw*"]
+where = ["."]
+include = ["ressmith*"]
+exclude = [
+  "tests*",
+  "examples*",
+  "docs*",
+  "scripts*",
+  "htmlcov*",
+  "ndic_raw*",
+]
 
 [tool.black]
 line-length = 88

@@ -82,9 +82,15 @@ def probabilistic_forecast(
         f"horizon={horizon}, n_samples={n_samples}"
     )
 
+    frequency = kwargs.pop("frequency", None)
+    if frequency is None and isinstance(data.index, pd.DatetimeIndex):
+        frequency = pd.infer_freq(data.index) or "ME"
+    if frequency is None:
+        frequency = "D"
+
     # Fit model
     forecast, params = fit_forecast(
-        data, model_name=model_name, horizon=horizon, **kwargs
+        data, model_name=model_name, horizon=horizon, frequency=frequency, **kwargs
     )
 
     from ressmith.primitives.models import MODEL_REGISTRY
@@ -97,7 +103,7 @@ def probabilistic_forecast(
     task = FitDeclineTask(model=model, phase=kwargs.get("phase", "oil"))
     fitted_model, _ = task.run(data, horizon=None)
 
-    forecast_spec = ForecastSpec(horizon=horizon, frequency="D")
+    forecast_spec = ForecastSpec(horizon=horizon, frequency=frequency)
     result = monte_carlo_forecast(
         fitted_model,
         forecast_spec,

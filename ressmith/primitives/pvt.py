@@ -507,6 +507,46 @@ def water_viscosity(
     )  # Water viscosity typically 0.2-1.5 cp at reservoir temps
 
 
+def bubble_point_pressure_standing(
+    gas_oil_ratio: float,
+    gas_specific_gravity: float,
+    oil_api_gravity: float,
+    temperature: float,
+) -> float:
+    """Bubble point pressure using Standing correlation (psi).
+
+    Pb = 18.2 * ((Rs/γg)^0.83 * 10^(0.00091*T - 0.0125*API) - 1.4)
+    """
+    if any(
+        x <= 0
+        for x in [gas_oil_ratio, gas_specific_gravity, oil_api_gravity, temperature]
+    ):
+        raise ValueError("All inputs must be positive")
+
+    pb = 18.2 * (
+        (gas_oil_ratio / gas_specific_gravity) ** 0.83
+        * (10 ** (0.00091 * temperature - 0.0125 * oil_api_gravity))
+        - 1.4
+    )
+    return max(pb, 14.7)
+
+
+def interfacial_tension(
+    oil_api_gravity: float,
+    temperature: float,
+    pressure: float,
+) -> float:
+    """Oil-water interfacial tension (dynes/cm), empirical correlation."""
+    if any(x <= 0 for x in [oil_api_gravity, temperature, pressure]):
+        raise ValueError("All inputs must be positive")
+
+    base_tension = 35 - 0.1 * (oil_api_gravity - 30)
+    temp_effect = -0.05 * (temperature - 60.0)
+    pressure_effect = 0.001 * (pressure - 14.7)
+    ift = base_tension + temp_effect + pressure_effect
+    return max(ift, 1.0)
+
+
 def calculate_pvt_properties(
     pressure: float,
     temperature: float,

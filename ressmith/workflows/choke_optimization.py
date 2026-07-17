@@ -8,11 +8,20 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize_scalar
+
+try:
+    from scipy.optimize import minimize_scalar
+except ImportError:  # pragma: no cover - optional dependency
+    minimize_scalar = None
 
 from ressmith.primitives.vlp import calculate_choke_performance
 
 logger = logging.getLogger(__name__)
+
+_SCIPY_REQUIRED = (
+    "scipy is required for choke optimization. "
+    "Install with: pip install 'ressmith[scipy]'"
+)
 
 
 def optimize_choke_size(
@@ -63,6 +72,9 @@ def optimize_choke_size(
     ... )
     >>> print(f"Optimal choke size: {result['optimal_choke_size']:.3f} inches")
     """
+    if minimize_scalar is None:
+        raise ImportError(_SCIPY_REQUIRED)
+
     logger.info(
         f"Optimizing choke size: target_rate={target_rate:.0f} STB/day, "
         f"upstream={upstream_pressure:.0f} psi"

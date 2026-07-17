@@ -2830,8 +2830,6 @@ dependencies = [
     { name = "decline-curve" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "scipy" },
-    { name = "timesmith" },
 ]
 
 [package.optional-dependencies]
@@ -2841,9 +2839,14 @@ all = [
     { name = "matplotlib" },
     { name = "myst-parser" },
     { name = "notebook" },
+    { name = "pykrige" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinx-rtd-theme" },
+    { name = "statsmodels" },
+    { name = "timesmith" },
 ]
 docs = [
     { name = "myst-parser" },
@@ -2869,12 +2872,18 @@ ml = [
     { name = "torch" },
     { name = "transformers" },
 ]
+scipy = [
+    { name = "scipy" },
+]
 spatial = [
     { name = "pykrige" },
     { name = "scikit-learn" },
 ]
 stats = [
     { name = "statsmodels" },
+]
+timesmith = [
+    { name = "timesmith" },
 ]
 viz = [
     { name = "matplotlib" },
@@ -2906,21 +2915,21 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "pykrige", marker = "extra == 'spatial'", specifier = ">=1.7.0" },
-    { name = "ressmith", extras = ["viz", "docs", "examples"], marker = "extra == 'all'" },
+    { name = "ressmith", extras = ["viz", "docs", "examples", "scipy", "timesmith", "stats", "spatial"], marker = "extra == 'all'" },
     { name = "scikit-learn", marker = "extra == 'ml'", specifier = ">=1.3" },
     { name = "scikit-learn", marker = "extra == 'spatial'", specifier = ">=1.3" },
-    { name = "scipy", specifier = ">=1.10.0" },
+    { name = "scipy", marker = "extra == 'scipy'", specifier = ">=1.10.0" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.0" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=1.20" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "statsmodels", marker = "extra == 'stats'", specifier = ">=0.14" },
-    { name = "timesmith", specifier = ">=0.1.0" },
+    { name = "timesmith", marker = "extra == 'timesmith'", specifier = ">=0.1.0" },
     { name = "torch", marker = "extra == 'llm'", specifier = ">=2.0" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.0" },
     { name = "transformers", marker = "extra == 'llm'", specifier = ">=4.41" },
     { name = "transformers", marker = "extra == 'ml'", specifier = ">=4.41" },
 ]
-provides-extras = ["viz", "stats", "spatial", "llm", "ml", "docs", "examples", "all"]
+provides-extras = ["scipy", "timesmith", "viz", "stats", "spatial", "llm", "ml", "docs", "examples", "all"]
 
 [package.metadata.requires-dev]
 dev = [

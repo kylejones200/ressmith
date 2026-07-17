@@ -14,12 +14,21 @@ import logging
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.optimize import minimize
+
+try:
+    from scipy.optimize import minimize
+except ImportError:  # pragma: no cover - optional dependency
+    minimize = None
 
 from ressmith.primitives.decline import arps_hyperbolic
 from ressmith.utils.errors import ERR_INSUFFICIENT_DATA, format_error
 
 logger = logging.getLogger(__name__)
+
+_SCIPY_REQUIRED = (
+    "scipy is required for type curve matching. "
+    "Install with: pip install 'ressmith[scipy]'"
+)
 
 
 @dataclass
@@ -158,6 +167,9 @@ def match_type_curve(
         >>> match = match_type_curve(time, rate)
         >>> print(f"Matched b: {match.matched_params['b']:.2f}")
     """
+    if minimize is None:
+        raise ImportError(_SCIPY_REQUIRED)
+
     valid_mask = (rate > 0) & (time > 0)
     if np.sum(valid_mask) < 3:
         raise ValueError(

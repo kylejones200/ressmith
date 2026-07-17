@@ -64,6 +64,7 @@ from ressmith.workflows.downtime import (
     reconstruct_rate_from_uptime,
     validate_uptime_data,
 )
+from ressmith.workflows.drilling import kick_analysis_study, mud_system_study
 from ressmith.workflows.ensemble import ensemble_forecast, ensemble_forecast_custom
 from ressmith.workflows.eor import (
     analyze_waterflood,
@@ -77,6 +78,10 @@ from ressmith.workflows.evaluation import (
     r2_score,
     rmse,
     smape,
+)
+from ressmith.workflows.geomechanics import (
+    formation_pressure_study,
+    geomechanical_study,
 )
 from ressmith.workflows.forecast_statistical import (
     calculate_confidence_intervals,
@@ -256,6 +261,11 @@ __all__ = [
     "DowntimeResult",
     "reconstruct_rate_from_uptime",
     "validate_uptime_data",
+    # Drilling / geomechanics
+    "mud_system_study",
+    "kick_analysis_study",
+    "geomechanical_study",
+    "formation_pressure_study",
     # Sensitivity
     "run_sensitivity",
     # Batch processing
